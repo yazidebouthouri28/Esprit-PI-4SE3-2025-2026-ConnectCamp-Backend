@@ -1,0 +1,117 @@
+package tn.esprit.projetintegre.controllernadine;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import tn.esprit.projetintegre.dto.ApiResponse;
+import tn.esprit.projetintegre.dto.PageResponse;
+import tn.esprit.projetintegre.dto.UserDTO;
+import tn.esprit.projetintegre.nadineentities.User;
+import tn.esprit.projetintegre.enums.Role;
+import tn.esprit.projetintegre.servicenadine.UserService;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+@Tag(name = "Users", description = "User management endpoints")
+@SecurityRequirement(name = "Bearer Authentication")
+public class UserController {
+
+    private final UserService userService;
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get all users (Admin only)")
+    public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers() {
+        List<UserDTO> users = userService.getAllUsers().stream()
+                .map(userService::toDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success(users));
+    }
+
+    @GetMapping("/active")
+    @Operation(summary = "Get active users with pagination")
+    public ResponseEntity<ApiResponse<PageResponse<UserDTO>>> getActiveUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<User> users = userService.getActiveUsers(PageRequest.of(page, size));
+        Page<UserDTO> userDTOs = users.map(userService::toDTO);
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(userDTOs)));
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get user by ID")
+    public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long id) {
+        UserDTO user = userService.toDTO(userService.getUserById(id));
+        return ResponseEntity.ok(ApiResponse.success(user));
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Search users")
+    public ResponseEntity<ApiResponse<PageResponse<UserDTO>>> searchUsers(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<User> users = userService.searchUsers(keyword, PageRequest.of(page, size));
+        Page<UserDTO> userDTOs = users.map(userService::toDTO);
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(userDTOs)));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update user profile")
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+        UserDTO user = userService.toDTO(userService.updateUser(id, userDetails));
+        return ResponseEntity.ok(ApiResponse.success("User updated successfully", user));
+    }
+
+    @PutMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update user role (Admin only)")
+    public ResponseEntity<ApiResponse<UserDTO>> updateUserRole(@PathVariable Long id, @RequestParam Role role) {
+        UserDTO user = userService.toDTO(userService.updateUserRole(id, role));
+        return ResponseEntity.ok(ApiResponse.success("Role updated successfully", user));
+    }
+
+    @PostMapping("/{id}/become-seller")
+    @Operation(summary = "Become a seller")
+    public ResponseEntity<ApiResponse<UserDTO>> becomeSeller(
+            @PathVariable Long id,
+            @RequestParam String storeName,
+            @RequestParam(required = false) String storeDescription) {
+        UserDTO user = userService.toDTO(userService.becomeSeller(id, storeName, storeDescription));
+        return ResponseEntity.ok(ApiResponse.success("You are now a seller", user));
+    }
+
+    @PostMapping("/{id}/suspend")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Suspend user (Admin only)")
+    public ResponseEntity<ApiResponse<UserDTO>> suspendUser(@PathVariable Long id, @RequestParam String reason) {
+        UserDTO user = userService.toDTO(userService.suspendUser(id, reason));
+        return ResponseEntity.ok(ApiResponse.success("User suspended", user));
+    }
+
+    @PostMapping("/{id}/unsuspend")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Unsuspend user (Admin only)")
+    public ResponseEntity<ApiResponse<UserDTO>> unsuspendUser(@PathVariable Long id) {
+        UserDTO user = userService.toDTO(userService.unsuspendUser(id));
+        return ResponseEntity.ok(ApiResponse.success("User unsuspended", user));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete user (Admin only)")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok(ApiResponse.success("User deleted", null));
+    }
+}
