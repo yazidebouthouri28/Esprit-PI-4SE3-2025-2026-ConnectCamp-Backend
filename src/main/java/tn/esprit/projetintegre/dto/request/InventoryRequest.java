@@ -12,6 +12,9 @@ public class InventoryRequest {
     @Min(value = 0, message = "La quantité doit être positive")
     private Integer quantity;
     
+    @Min(value = 0, message = "La quantité réservée doit être positive")
+    private Integer reservedQuantity;
+    
     private Integer lowStockThreshold = 10;
     private Integer safetyStock = 5;
     private Integer reorderQuantity;

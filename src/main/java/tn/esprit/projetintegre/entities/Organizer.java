@@ -85,12 +85,4 @@ public class Organizer {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-    @ManyToMany
-    @JoinTable(
-            name = "organizer_service",
-            joinColumns = @JoinColumn(name = "organizer_id"),
-            inverseJoinColumns = @JoinColumn(name = "service_id")
-    )
-    @Builder.Default
-    private List<Service> selectedServices = new ArrayList<>();
 }

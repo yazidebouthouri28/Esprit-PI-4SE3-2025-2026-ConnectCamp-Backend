@@ -7,8 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import tn.esprit.projetintegre.entities.User;
 import tn.esprit.projetintegre.enums.Role;
-import tn.esprit.projetintegre.enums.SponsorStatus;
-
 
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +20,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByRole(Role role);
     Page<User> findByIsActiveTrue(Pageable pageable);
     Page<User> findByIsSellerTrue(Pageable pageable);
-    List<User> findByRoleAndSponsorStatus(Role role, SponsorStatus sponsorStatus);
     
     @Query("SELECT u FROM User u WHERE u.isSeller = true AND u.sellerVerified = true")
     List<User> findVerifiedSellers();

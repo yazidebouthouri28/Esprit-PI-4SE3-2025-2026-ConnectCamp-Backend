@@ -11,11 +11,15 @@ import java.util.List;
 
 @Entity
 @Table(name = "reviews", indexes = {
-    @Index(name = "idx_review_user", columnList = "user_id"),
-    @Index(name = "idx_review_target", columnList = "targetType, targetId"),
-    @Index(name = "idx_review_rating", columnList = "rating")
+        @Index(name = "idx_review_user", columnList = "user_id"),
+        @Index(name = "idx_review_target", columnList = "targetType, targetId"),
+        @Index(name = "idx_review_rating", columnList = "rating")
 })
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Review {
 
     @Id
@@ -82,5 +86,45 @@ public class Review {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public ReviewTargetType getTargetType() {
+        return targetType;
+    }
+
+    public void setTargetType(ReviewTargetType targetType) {
+        this.targetType = targetType;
+    }
+
+    public Long getTargetId() {
+        return targetId;
+    }
+
+    public void setTargetId(Long targetId) {
+        this.targetId = targetId;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 }

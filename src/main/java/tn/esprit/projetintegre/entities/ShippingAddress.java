@@ -8,10 +8,14 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "shipping_addresses", indexes = {
-    @Index(name = "idx_shipaddr_user", columnList = "user_id"),
-    @Index(name = "idx_shipaddr_default", columnList = "isDefault")
+        @Index(name = "idx_shipaddr_user", columnList = "user_id"),
+        @Index(name = "idx_shipaddr_default", columnList = "isDefault")
 })
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ShippingAddress {
 
     @Id
@@ -86,6 +90,30 @@ public class ShippingAddress {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public String getDeliveryInstructions() {
+        return deliveryInstructions;
+    }
+
+    public Boolean getIsDefault() {
+        return isDefault;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
     public String getFullAddress() {

@@ -2,6 +2,7 @@ package tn.esprit.projetintegre.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -19,7 +20,7 @@ public class Achievement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Achievement name is required")
+    @NotBlank(message = "L'achievement name est obligatoire")
     private String name;
 
     @Column(length = 500)
@@ -28,9 +29,12 @@ public class Achievement {
     private String badge;
     private String icon;
 
+    @PositiveOrZero(message = "Les points requis ne peuvent pas être négatifs")
     private Integer requiredPoints;
+    @PositiveOrZero(message = "Les points de récompense ne peuvent pas être négatifs")
     private Integer rewardPoints;
 
+    @NotBlank(message = "La catégorie est obligatoire")
     private String category; // SHOPPING, EVENTS, SOCIAL, LOYALTY
     private Integer level; //
 

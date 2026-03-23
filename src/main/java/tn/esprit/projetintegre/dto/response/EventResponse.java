@@ -13,11 +13,11 @@ import java.util.List;
 @AllArgsConstructor
 public class EventResponse {
     private Long id;
-    private String title;
+    private String name;
+    private String picture;
     private String description;
     private String eventType;
     private String category;
-    private LocalDateTime startDate;
     private LocalDateTime endDate;
     private String location;
     private Integer maxParticipants;
@@ -25,14 +25,14 @@ public class EventResponse {
     private BigDecimal price;
     private Boolean isFree;
     private List<String> images;
-    private Integer viewCount;
-    private Double latitude;      // ← EST-CE QUE C’EST ICI ?
-    private Double longitude;
     private EventStatus status;
     private Long siteId;
     private String siteName;
     private Long organizerId;
     private String organizerName;
+    private Long organizerUserId;
+    private Integer likesCount;
+    private Integer dislikesCount;
+    private BigDecimal rating;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }
