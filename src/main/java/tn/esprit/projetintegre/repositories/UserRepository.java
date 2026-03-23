@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import tn.esprit.projetintegre.entities.User;
 import tn.esprit.projetintegre.enums.Role;
+import tn.esprit.projetintegre.enums.SponsorStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,4 +27,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     @Query("SELECT u FROM User u WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<User> searchUsers(String keyword, Pageable pageable);
+    List<User> findByRoleAndSponsorStatus(Role role, SponsorStatus sponsorStatus);
 }

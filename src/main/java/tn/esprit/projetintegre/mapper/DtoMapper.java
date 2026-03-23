@@ -2,6 +2,7 @@ package tn.esprit.projetintegre.mapper;
 
 import org.springframework.stereotype.Component;
 import tn.esprit.projetintegre.dto.response.*;
+import tn.esprit.projetintegre.dto.response.EventCommentResponse;
 import tn.esprit.projetintegre.entities.*;
 
 import java.util.Collections;
@@ -125,6 +126,9 @@ public class DtoMapper {
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
+
+    public List<NotificationResponse> toNotificationResponseList(List<Notification> entities) {
+        return entities.stream().map(this::toNotificationResponse).collect(Collectors.toList());
     }
 
     // Sponsorship Mapping
@@ -285,6 +289,11 @@ public class DtoMapper {
                 .updatedAt(entity.getUpdatedAt())
                 .build();
     }
+
+    public List<SiteResponse> toSiteResponseList(List<Site> entities) {
+        return entities.stream().map(this::toSiteResponse).collect(Collectors.toList());
+    }
+
     // Achievement Mapping
     public AchievementResponse toAchievementResponse(Achievement entity) {
         return AchievementResponse.builder()
@@ -301,6 +310,21 @@ public class DtoMapper {
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
+    }
+
+    // UserAchievement Mapping
+    public UserAchievementResponse toUserAchievementResponse(UserAchievement entity) {
+        return UserAchievementResponse.builder()
+                .id(entity.getId())
+                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
+                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
+                .achievementId(entity.getAchievement() != null ? entity.getAchievement().getId() : null)
+                .achievementName(entity.getAchievement() != null ? entity.getAchievement().getName() : null)
+                .build();
+    }
+
+    public List<UserAchievementResponse> toUserAchievementResponseList(List<UserAchievement> entities) {
+        return entities.stream().map(this::toUserAchievementResponse).collect(Collectors.toList());
     }
 
     public List<AchievementResponse> toAchievementResponseList(List<Achievement> entities) {
@@ -357,6 +381,34 @@ public class DtoMapper {
     public List<ReservationResponse> toReservationResponseList(List<Reservation> entities) {
         return entities.stream().map(this::toReservationResponse).collect(Collectors.toList());
     }
+    // Ticket Mapping
+    public TicketResponse toTicketResponse(Ticket entity) {
+        return TicketResponse.builder()
+                .id(entity.getId())
+                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
+                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
+                .status(entity.getStatus())
+                .createdAt(entity.getCreatedAt())
+                .build();
+    }
+
+    public List<TicketResponse> toTicketResponseList(List<Ticket> entities) {
+        return entities.stream().map(this::toTicketResponse).collect(Collectors.toList());
+    }
+    // Sponsor Mapping
+    public SponsorResponse toSponsorResponse(Sponsor entity) {
+        return SponsorResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .website(entity.getWebsite())
+                .email(entity.getEmail())
+                .phone(entity.getPhone())
+                .isActive(entity.getIsActive())
+                .tier(entity.getTier())
+                .createdAt(entity.getCreatedAt())
+                .build();
+    }
 
     // Sponsor Mapping
     public List<SponsorResponse> toSponsorResponseList(List<Sponsor> entities) {
@@ -385,6 +437,7 @@ public class DtoMapper {
     }
 
     public List<CartItemResponse> toCartItemResponseList(List<CartItem> entities) {
+        return entities.stream().map(this::toCartItemResponse).collect(Collectors.toList());
     }
 
     // CampingService Mapping
@@ -425,6 +478,22 @@ public class DtoMapper {
         return entities.stream().map(this::toAlertResponse).collect(Collectors.toList());
     }
 
+    // EventComment Mapping
+    public EventCommentResponse toEventCommentResponse(EventComment entity) {
+        return EventCommentResponse.builder()
+                .id(entity.getId())
+                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
+                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
+                .eventId(entity.getEvent() != null ? entity.getEvent().getId() : null)
+                .content(entity.getContent())
+                .createdAt(entity.getCreatedAt())
+                .build();
+    }
+
+    public List<EventCommentResponse> toEventCommentResponseList(List<EventComment> entities) {
+        return entities.stream().map(this::toEventCommentResponse).collect(Collectors.toList());
+    }
+
     // Wallet Mapping
     public WalletResponse toWalletResponse(Wallet entity) {
         return WalletResponse.builder()
@@ -437,5 +506,46 @@ public class DtoMapper {
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
+    }
+    public List<WalletResponse> toWalletResponseList(List<Wallet> entities) {
+        return entities.stream().map(this::toWalletResponse).collect(Collectors.toList());
+    }
+    // Complaint Mapping
+    public ComplaintResponse toComplaintResponse(Complaint entity) {
+        return ComplaintResponse.builder()
+                .id(entity.getId())
+                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
+                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
+                .subject(entity.getSubject())
+                .description(entity.getDescription())
+                .status(entity.getStatus())
+                .createdAt(entity.getCreatedAt())
+                .build();
+    }
+
+    public List<ComplaintResponse> toComplaintResponseList(List<Complaint> entities) {
+        return entities.stream().map(this::toComplaintResponse).collect(Collectors.toList());
+    }
+    // Inventory Mapping
+    public InventoryResponse toInventoryResponse(Inventory entity) {
+        return InventoryResponse.builder()
+                .id(entity.getId())
+                .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
+                .productName(entity.getProduct() != null ? entity.getProduct().getName() : null)
+                .quantity(entity.getQuantity())
+                .warehouseId(entity.getWarehouse() != null ? entity.getWarehouse().getId() : null)
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    public List<InventoryResponse> toInventoryResponseList(List<Inventory> entities) {
+        return entities.stream().map(this::toInventoryResponse).collect(Collectors.toList());
+    }
+    public List<OrderResponse> toOrderResponseList(List<Order> entities) {
+        return entities.stream().map(this::toOrderResponse).collect(Collectors.toList());
+    }
+    public List<UserMissionResponse> toUserMissionResponseList(List<UserMission> entities) {
+        return entities.stream().map(this::toUserMissionResponse).collect(Collectors.toList());
     }
 }

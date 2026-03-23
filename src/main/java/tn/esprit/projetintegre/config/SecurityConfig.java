@@ -44,7 +44,8 @@ public class SecurityConfig {
                         "/webjars/**",
                         "/error",
                         "/actuator/**",
-                        "/uploads/**"
+                        "/uploads/**",
+                        "/api/sponsors/**",
         };
 
         @Bean
