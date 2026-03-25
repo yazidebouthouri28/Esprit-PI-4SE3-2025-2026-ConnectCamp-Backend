@@ -22,6 +22,9 @@ public interface SiteRepository extends JpaRepository<Site, Long> {
     Page<Site> findByIsActiveTrue(Pageable pageable);
 
     @EntityGraph(attributePaths = {"owner"})
+    List<Site> findByIsActiveTrue();
+
+    @EntityGraph(attributePaths = {"owner"})
     Page<Site> findByOwnerId(Long ownerId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"owner"})

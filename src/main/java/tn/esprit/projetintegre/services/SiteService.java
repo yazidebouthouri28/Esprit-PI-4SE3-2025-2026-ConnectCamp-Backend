@@ -28,6 +28,10 @@ public class SiteService {
         return siteRepository.findByIsActiveTrue(pageable);
     }
 
+    public List<Site> getActiveSites() {
+        return siteRepository.findByIsActiveTrue();
+    }
+
     public Site getSiteById(Long id) {
         return siteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Site not found with id: " + id));

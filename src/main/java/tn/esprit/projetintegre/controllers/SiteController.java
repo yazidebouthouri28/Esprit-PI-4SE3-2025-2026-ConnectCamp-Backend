@@ -14,8 +14,10 @@ import tn.esprit.projetintegre.dto.ApiResponse;
 import tn.esprit.projetintegre.dto.PageResponse;
 import tn.esprit.projetintegre.dto.request.SiteRequest;
 import tn.esprit.projetintegre.dto.response.SiteResponse;
+import tn.esprit.projetintegre.dto.response.SiteSummaryResponse;
 import tn.esprit.projetintegre.entities.Site;
 import tn.esprit.projetintegre.mapper.DtoMapper;
+import tn.esprit.projetintegre.mapper.SiteModuleMapper;
 import tn.esprit.projetintegre.services.SiteService;
 
 import java.util.List;
@@ -29,6 +31,7 @@ public class SiteController {
 
     private final SiteService siteService;
     private final DtoMapper dtoMapper;
+    private final SiteModuleMapper siteModuleMapper;
 
     @GetMapping
     @Operation(summary = "Get all active sites")
@@ -38,6 +41,13 @@ public class SiteController {
         Page<Site> sites = siteService.getActiveSites(PageRequest.of(page, size));
         Page<SiteResponse> response = sites.map(dtoMapper::toSiteResponse);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
+    }
+
+    @GetMapping("/summary")
+    @Operation(summary = "Get active site summaries")
+    public ResponseEntity<ApiResponse<List<SiteSummaryResponse>>> getSiteSummaries() {
+        List<Site> sites = siteService.getActiveSites();
+        return ResponseEntity.ok(ApiResponse.success(siteModuleMapper.toSiteSummaryResponseList(sites)));
     }
 
     @GetMapping("/{id}")
