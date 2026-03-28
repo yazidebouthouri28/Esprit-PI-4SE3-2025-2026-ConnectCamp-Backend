@@ -14,12 +14,11 @@ RUN ./mvnw package -DskipTests -B
 FROM eclipse-temurin:17-jre-alpine AS runtime
 WORKDIR /app
 
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring
+RUN addgroup -S spring && adduser -S spring -G spring && mkdir -p uploads && chown spring:spring uploads
 
 COPY --from=builder /workspace/target/projet-integre-1.0.0.jar app.jar
 
-RUN mkdir -p uploads
+USER spring
 
 EXPOSE 8089
 ENTRYPOINT ["java", "-jar", "app.jar"]
