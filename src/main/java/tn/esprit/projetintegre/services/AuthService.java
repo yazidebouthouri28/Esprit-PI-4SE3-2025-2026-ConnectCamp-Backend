@@ -10,6 +10,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import tn.esprit.projetintegre.dto.AuthRequest;
 import tn.esprit.projetintegre.dto.AuthResponse;
 import tn.esprit.projetintegre.dto.RegisterRequest;
@@ -48,6 +49,8 @@ public class AuthService {
     private int resetCodeExpirationMinutes;
     @Value("${spring.mail.username}")
     private String resetCodeSender;
+    @Value("${spring.mail.password:}")
+    private String resetCodeSenderPassword;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -153,6 +156,9 @@ public class AuthService {
 
     @Transactional
     public Map<String, String> requestPasswordResetCode(String email) {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "sent");
+
         User user = userRepository.findByEmail(email.trim())
                 .orElse(null);
 
@@ -161,11 +167,16 @@ public class AuthService {
             user.setPasswordResetToken(resetCode);
             user.setPasswordResetExpires(LocalDateTime.now().plusMinutes(resetCodeExpirationMinutes));
             userRepository.save(user);
-            sendResetCodeEmail(user.getEmail(), resetCode);
+            if (isResetEmailConfigured()) {
+                sendResetCodeEmail(user.getEmail(), resetCode);
+            } else {
+                log.warn("SMTP not configured; returning dev reset code for {}", maskEmail(user.getEmail()));
+                response.put("devCode", resetCode);
+            }
+        } else {
+            log.info("Password reset requested for non-existent email: {}", maskEmail(email));
         }
 
-        Map<String, String> response = new HashMap<>();
-        response.put("status", "sent");
         return response;
     }
 
@@ -204,5 +215,28 @@ public class AuthService {
             log.error("Failed to send password reset email to {}", toEmail, ex);
             throw new IllegalStateException("Unable to send verification email. Please try again later.");
         }
+    }
+
+    private boolean isResetEmailConfigured() {
+        if (!StringUtils.hasText(resetCodeSender) || !StringUtils.hasText(resetCodeSenderPassword)) {
+            return false;
+        }
+
+        return !"your-email@gmail.com".equalsIgnoreCase(resetCodeSender.trim())
+                && !"your-app-password".equals(resetCodeSenderPassword.trim());
+    }
+
+    private String maskEmail(String email) {
+        if (!StringUtils.hasText(email)) {
+            return "<empty>";
+        }
+
+        String normalized = email.trim();
+        int atIndex = normalized.indexOf('@');
+        if (atIndex <= 1) {
+            return normalized;
+        }
+
+        return normalized.charAt(0) + "***" + normalized.substring(atIndex);
     }
 }

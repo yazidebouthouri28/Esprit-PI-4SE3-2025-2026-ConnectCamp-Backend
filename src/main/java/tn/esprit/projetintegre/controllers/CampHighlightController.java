@@ -17,7 +17,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/camp-highlights")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class CampHighlightController {
 
     private final CampHighlightService campHighlightService;

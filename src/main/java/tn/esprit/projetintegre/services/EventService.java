@@ -116,6 +116,7 @@ public class EventService {
         if (eventDetails.getPrice() != null) event.setPrice(eventDetails.getPrice());
         if (eventDetails.getIsFree() != null) event.setIsFree(eventDetails.getIsFree());
         if (eventDetails.getImages() != null) event.setImages(eventDetails.getImages());
+        if (eventDetails.getThumbnail() != null) event.setThumbnail(eventDetails.getThumbnail());
         if (eventDetails.getLocation() != null) event.setLocation(eventDetails.getLocation());
 
         return eventRepository.save(event);
