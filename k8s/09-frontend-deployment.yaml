@@ -18,7 +18,7 @@ spec:
       containers:
         - name: frontend
           # Remplacer <DOCKERHUB_USERNAME> par ton username Docker Hub
-          image: farah/connectcamp-frontend:latest
+          image: farah893/connectcamp-frontend:latest
           ports:
             - containerPort: 80
           livenessProbe:

@@ -12,7 +12,7 @@ on:
       - 'backConnect/**'
 
 env:
-  DOCKER_IMAGE: farah/connectcamp-backend
+  DOCKER_IMAGE: farah893/connectcamp-backend
   JAVA_VERSION: '17'
 
 jobs:
@@ -60,7 +60,7 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: farah
+          username: farah893
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata
