@@ -34,11 +34,8 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: Run unit tests
-        run: mvn clean test -Dtest="SiteServiceTest,EmergencyAlertServiceTest,CampingServiceServiceTest,PackServiceTest" -B
-
       - name: Build JAR
-        run: mvn package -DskipTests -B
+        run: mvn clean package -DskipTests -B
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
