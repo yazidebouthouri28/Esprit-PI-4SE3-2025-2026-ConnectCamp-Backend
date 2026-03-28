@@ -35,7 +35,7 @@ jobs:
           cache: maven
 
       - name: Run unit tests
-        run: mvn test -Dtest="SiteServiceTest,EmergencyAlertServiceTest,CampingServiceServiceTest,PackServiceTest" -B
+        run: mvn clean test -Dtest="SiteServiceTest,EmergencyAlertServiceTest,CampingServiceServiceTest,PackServiceTest" -B
 
       - name: Build JAR
         run: mvn package -DskipTests -B
