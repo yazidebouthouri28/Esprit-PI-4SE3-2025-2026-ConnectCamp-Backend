@@ -42,23 +42,19 @@ public class Promotion {
     private BigDecimal maxDiscountAmount;
 
     private Integer maxUsage;
-    @Builder.Default
     private Integer currentUsage = 0;
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 
-    @Builder.Default
     private Boolean isActive = true;
 
-    @Builder.Default
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection
     @CollectionTable(name = "promotion_applicable_products", joinColumns = @JoinColumn(name = "promotion_id"))
     @Column(name = "product_id")
     private List<Long> applicableProductIds = new ArrayList<>();
 
-    @Builder.Default
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection
     @CollectionTable(name = "promotion_applicable_categories", joinColumns = @JoinColumn(name = "promotion_id"))
     @Column(name = "category_id")
     private List<Long> applicableCategoryIds = new ArrayList<>();
@@ -81,9 +77,9 @@ public class Promotion {
 
     public boolean isValid() {
         LocalDateTime now = LocalDateTime.now();
-        return isActive &&
-                (startDate == null || now.isAfter(startDate)) &&
-                (endDate == null || now.isBefore(endDate)) &&
-                (maxUsage == null || currentUsage < maxUsage);
+        return isActive && 
+               (startDate == null || now.isAfter(startDate)) && 
+               (endDate == null || now.isBefore(endDate)) &&
+               (maxUsage == null || currentUsage < maxUsage);
     }
 }

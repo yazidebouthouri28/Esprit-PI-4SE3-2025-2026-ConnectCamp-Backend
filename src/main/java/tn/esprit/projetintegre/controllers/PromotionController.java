@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/promotions")
 @RequiredArgsConstructor
-@Slf4j
 @Tag(name = "Promotions", description = "Promotion management APIs")
 public class PromotionController {
 
@@ -71,8 +69,7 @@ public class PromotionController {
             @Valid @RequestBody PromotionRequest request) {
         Promotion promotion = toEntity(request);
         Promotion created = promotionService.createPromotion(promotion);
-        return ResponseEntity
-                .ok(ApiResponse.success("Promotion created successfully", dtoMapper.toPromotionResponse(created)));
+        return ResponseEntity.ok(ApiResponse.success("Promotion created successfully", dtoMapper.toPromotionResponse(created)));
     }
 
     @PutMapping("/{id}")
@@ -82,24 +79,21 @@ public class PromotionController {
             @Valid @RequestBody PromotionRequest request) {
         Promotion promotionDetails = toEntity(request);
         Promotion updated = promotionService.updatePromotion(id, promotionDetails);
-        return ResponseEntity
-                .ok(ApiResponse.success("Promotion updated successfully", dtoMapper.toPromotionResponse(updated)));
+        return ResponseEntity.ok(ApiResponse.success("Promotion updated successfully", dtoMapper.toPromotionResponse(updated)));
     }
 
     @PutMapping("/{id}/activate")
     @Operation(summary = "Activate a promotion")
     public ResponseEntity<ApiResponse<PromotionResponse>> activatePromotion(@PathVariable Long id) {
         Promotion activated = promotionService.activatePromotion(id);
-        return ResponseEntity
-                .ok(ApiResponse.success("Promotion activated successfully", dtoMapper.toPromotionResponse(activated)));
+        return ResponseEntity.ok(ApiResponse.success("Promotion activated successfully", dtoMapper.toPromotionResponse(activated)));
     }
 
     @PutMapping("/{id}/deactivate")
     @Operation(summary = "Deactivate a promotion")
     public ResponseEntity<ApiResponse<PromotionResponse>> deactivatePromotion(@PathVariable Long id) {
         Promotion deactivated = promotionService.deactivatePromotion(id);
-        return ResponseEntity.ok(
-                ApiResponse.success("Promotion deactivated successfully", dtoMapper.toPromotionResponse(deactivated)));
+        return ResponseEntity.ok(ApiResponse.success("Promotion deactivated successfully", dtoMapper.toPromotionResponse(deactivated)));
     }
 
     @DeleteMapping("/{id}")

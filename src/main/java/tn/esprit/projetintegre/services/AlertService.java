@@ -1,9 +1,6 @@
 package tn.esprit.projetintegre.services;
 
 import lombok.RequiredArgsConstructor;
-import tn.esprit.projetintegre.exception.AccessDeniedException;
-import tn.esprit.projetintegre.security.SecurityUtil;
-import tn.esprit.projetintegre.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,18 +27,10 @@ public class AlertService {
     private final UserRepository userRepository;
 
     public List<Alert> getAllAlerts() {
-        // Only ADMIN can view all alerts
-        if (!SecurityUtil.hasRole(Role.ADMIN)) {
-            throw new AccessDeniedException("Only ADMIN can view all alerts");
-        }
         return alertRepository.findAll();
     }
 
     public Page<Alert> getAllAlerts(Pageable pageable) {
-        // Only ADMIN can view all alerts with pagination
-        if (!SecurityUtil.hasRole(Role.ADMIN)) {
-            throw new AccessDeniedException("Only ADMIN can view all alerts");
-        }
         return alertRepository.findAll(pageable);
     }
 
@@ -59,10 +48,6 @@ public class AlertService {
     }
 
     public Alert createAlert(Alert alert, Long reportedById, Long siteId) {
-        // CAMPPER and ADMIN can create alerts
-        if (!SecurityUtil.hasRole(Role.CAMPER) && !SecurityUtil.hasRole(Role.ADMIN)) {
-            throw new AccessDeniedException("Only CAMPPER or ADMIN can create alerts");
-        }
         User reporter = userRepository.findById(reportedById)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + reportedById));
         alert.setReportedBy(reporter);
@@ -79,10 +64,6 @@ public class AlertService {
     }
 
     public Alert updateAlert(Long id, Alert alertDetails) {
-        // Only ADMIN can update alerts
-        if (!SecurityUtil.hasRole(Role.ADMIN)) {
-            throw new AccessDeniedException("Only ADMIN can update alerts");
-        }
         Alert alert = getAlertById(id);
         alert.setTitle(alertDetails.getTitle());
         alert.setDescription(alertDetails.getDescription());
@@ -95,10 +76,6 @@ public class AlertService {
     }
 
     public Alert resolveAlert(Long id, Long resolvedById, String resolutionNotes) {
-        // Only ADMIN can resolve alerts
-        if (!SecurityUtil.hasRole(Role.ADMIN)) {
-            throw new AccessDeniedException("Only ADMIN can resolve alerts");
-        }
         Alert alert = getAlertById(id);
         User resolver = userRepository.findById(resolvedById)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + resolvedById));
@@ -111,20 +88,12 @@ public class AlertService {
     }
 
     public Alert updateStatus(Long id, AlertStatus status) {
-        // Only ADMIN can update alert status
-        if (!SecurityUtil.hasRole(Role.ADMIN)) {
-            throw new AccessDeniedException("Only ADMIN can update alert status");
-        }
         Alert alert = getAlertById(id);
         alert.setStatus(status);
         return alertRepository.save(alert);
     }
 
     public void deleteAlert(Long id) {
-        // Only ADMIN can delete alerts
-        if (!SecurityUtil.hasRole(Role.ADMIN)) {
-            throw new AccessDeniedException("Only ADMIN can delete alerts");
-        }
         Alert alert = getAlertById(id);
         alertRepository.delete(alert);
     }
