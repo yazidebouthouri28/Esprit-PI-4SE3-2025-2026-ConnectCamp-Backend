@@ -3,16 +3,22 @@ package tn.esprit.projetintegre.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import tn.esprit.projetintegre.dto.ApiResponse;
 import tn.esprit.projetintegre.dto.PageResponse;
 import tn.esprit.projetintegre.dto.UserDTO;
+import tn.esprit.projetintegre.dto.request.ChangePasswordRequest;
+import tn.esprit.projetintegre.dto.request.ProfileUpdateRequest;
 import tn.esprit.projetintegre.entities.User;
 import tn.esprit.projetintegre.enums.Role;
 import tn.esprit.projetintegre.services.UserService;
@@ -49,13 +55,6 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(userDTOs)));
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Get user by ID")
-    public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long id) {
-        UserDTO user = userService.toDTO(userService.getUserById(id));
-        return ResponseEntity.ok(ApiResponse.success(user));
-    }
-
     @GetMapping("/search")
     @Operation(summary = "Search users")
     public ResponseEntity<ApiResponse<PageResponse<UserDTO>>> searchUsers(
@@ -67,11 +66,62 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(userDTOs)));
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Get user by ID")
+    public ResponseEntity<ApiResponse<UserDTO>> getUserById(
+            @PathVariable Long id,
+            Authentication authentication) {
+        assertCanAccessUser(id, authentication);
+        UserDTO user = userService.toDTO(userService.getUserById(id));
+        return ResponseEntity.ok(ApiResponse.success(user));
+    }
+
     @PutMapping("/{id}")
-    @Operation(summary = "Update user profile")
-    public ResponseEntity<ApiResponse<UserDTO>> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
-        UserDTO user = userService.toDTO(userService.updateUser(id, userDetails));
-        return ResponseEntity.ok(ApiResponse.success("User updated successfully", user));
+    @Operation(summary = "Update user profile (self or admin)")
+    public ResponseEntity<ApiResponse<UserDTO>> updateUserProfile(
+            @PathVariable Long id,
+            @Valid @RequestBody ProfileUpdateRequest request,
+            Authentication authentication) {
+        assertCanAccessUser(id, authentication);
+        try {
+            UserDTO user = userService.toDTO(userService.updateUserProfile(id, request));
+            return ResponseEntity.ok(ApiResponse.success("User updated successfully", user));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(ex.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/change-password")
+    @Operation(summary = "Change password (self or admin)")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @PathVariable Long id,
+            @Valid @RequestBody ChangePasswordRequest request,
+            Authentication authentication) {
+        assertCanAccessUser(id, authentication);
+        try {
+            userService.changePassword(id, request.getCurrentPassword(), request.getNewPassword());
+            return ResponseEntity.ok(ApiResponse.success("Password updated successfully", null));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(ex.getMessage()));
+        }
+    }
+
+    private void assertCanAccessUser(Long id, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+        }
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+        if (isAdmin) {
+            return;
+        }
+        User target = userService.getUserById(id);
+        String name = authentication.getName();
+        if (name != null && name.equalsIgnoreCase(target.getUsername())) {
+            return;
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only manage your own account");
     }
 
     @PutMapping("/{id}/role")

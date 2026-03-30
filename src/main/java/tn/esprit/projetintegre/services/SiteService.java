@@ -23,37 +23,52 @@ public class SiteService {
     private final UserRepository userRepository;
     private final SiteImageStorageService siteImageStorageService;
 
+    @Transactional(readOnly = true)
     public List<Site> getAllSites() {
-        return siteRepository.findAll();
+        return initializeCollections(siteRepository.findAll());
     }
 
+    @Transactional(readOnly = true)
     public Page<Site> getActiveSites(Pageable pageable) {
-        return siteRepository.findListedActiveSites(pageable);
+        Page<Site> sites = siteRepository.findListedActiveSites(pageable);
+        initializeCollections(sites.getContent());
+        return sites;
     }
 
+    @Transactional(readOnly = true)
     public List<Site> getActiveSites() {
-        return siteRepository.findListedActiveSites();
+        return initializeCollections(siteRepository.findListedActiveSites());
     }
 
+    @Transactional(readOnly = true)
     public Site getSiteById(Long id) {
-        return siteRepository.findById(id)
+        Site site = siteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Site not found with id: " + id));
+        return initializeCollections(site);
     }
 
+    @Transactional(readOnly = true)
     public Page<Site> searchSites(String keyword, Pageable pageable) {
-        return siteRepository.searchSites(keyword, pageable);
+        Page<Site> sites = siteRepository.searchSites(keyword, pageable);
+        initializeCollections(sites.getContent());
+        return sites;
     }
 
+    @Transactional(readOnly = true)
     public Page<Site> getSitesByOwner(Long ownerId, Pageable pageable) {
-        return siteRepository.findByOwnerId(ownerId, pageable);
+        Page<Site> sites = siteRepository.findByOwnerId(ownerId, pageable);
+        initializeCollections(sites.getContent());
+        return sites;
     }
 
+    @Transactional(readOnly = true)
     public List<Site> getSitesByCity(String city) {
-        return siteRepository.findByCity(city);
+        return initializeCollections(siteRepository.findByCity(city));
     }
 
+    @Transactional(readOnly = true)
     public List<Site> getSitesByType(String type) {
-        return siteRepository.findByType(type);
+        return initializeCollections(siteRepository.findByType(type));
     }
 
     @Transactional
@@ -121,5 +136,28 @@ public class SiteService {
         }
         siteImageStorageService.deleteByPublicUrl(url);
         return siteRepository.save(site);
+    }
+
+    private Site initializeCollections(Site site) {
+        if (site == null) {
+            return null;
+        }
+
+        if (site.getImages() != null) {
+            site.getImages().size();
+        }
+
+        if (site.getAmenities() != null) {
+            site.getAmenities().size();
+        }
+
+        return site;
+    }
+
+    private List<Site> initializeCollections(List<Site> sites) {
+        for (Site site : sites) {
+            initializeCollections(site);
+        }
+        return sites;
     }
 }

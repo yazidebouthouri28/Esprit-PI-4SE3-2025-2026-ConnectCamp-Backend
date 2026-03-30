@@ -4,8 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import tn.esprit.projetintegre.entities.Event;
 import tn.esprit.projetintegre.entities.Organizer;
 import tn.esprit.projetintegre.entities.Site;
@@ -58,17 +62,27 @@ public class EventService {
     }
 
     @Transactional
-    public Event createEvent(Event event, Long siteId, Long organizerId, String authenticatedUsername) {
+    public Event createEvent(Event event, Long siteId, Long organizerId, Authentication authentication) {
         if (siteId != null) {
             Site site = siteRepository.findById(siteId)
                     .orElseThrow(() -> new ResourceNotFoundException("Site not found"));
             event.setSite(site);
         }
 
-        Organizer organizer = resolveOrganizer(organizerId, authenticatedUsername);
+        String authenticatedUsername = authentication != null ? authentication.getName() : null;
+        Organizer organizer;
+        if (isAdmin(authentication)) {
+            organizer = resolveOrganizer(organizerId, authenticatedUsername);
+        } else {
+            Organizer self = resolveOrganizer(null, authenticatedUsername);
+            if (organizerId != null && organizerId > 0 && !self.getId().equals(organizerId)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only create events as yourself");
+            }
+            organizer = self;
+        }
         event.setOrganizer(organizer);
         if (event.getStatus() == null) {
-            event.setStatus(EventStatus.DRAFT);
+            event.setStatus(isAdmin(authentication) ? EventStatus.DRAFT : EventStatus.PUBLISHED);
         }
 
         return eventRepository.save(event);
@@ -102,9 +116,46 @@ public class EventService {
                         .build()));
     }
 
+    public void assertCanAccessOrganizerScope(Long organizerId, Authentication authentication) {
+        if (isAdmin(authentication)) {
+            return;
+        }
+        Organizer self = resolveOrganizer(null, authentication != null ? authentication.getName() : null);
+        if (!self.getId().equals(organizerId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only access your own organizer data");
+        }
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        if (authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+    }
+
+    private void assertOrganizerOwnsEvent(Event event, Authentication authentication) {
+        if (isAdmin(authentication)) {
+            return;
+        }
+        if (authentication == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+        }
+        User user = userRepository.findByUsername(authentication.getName())
+                .or(() -> userRepository.findByEmail(authentication.getName()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User not found"));
+        Organizer org = organizerRepository.findByUser_Id(user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Organizer profile required"));
+        if (event.getOrganizer() == null || !event.getOrganizer().getId().equals(org.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only manage your own events");
+        }
+    }
+
     @Transactional
-    public Event updateEvent(Long id, Event eventDetails) {
+    public Event updateEvent(Long id, Event eventDetails, Authentication authentication) {
         Event event = getEventById(id);
+        assertOrganizerOwnsEvent(event, authentication);
 
         if (eventDetails.getTitle() != null) event.setTitle(eventDetails.getTitle());
         if (eventDetails.getDescription() != null) event.setDescription(eventDetails.getDescription());
@@ -123,15 +174,17 @@ public class EventService {
     }
 
     @Transactional
-    public Event updateEventStatus(Long id, EventStatus status) {
+    public Event updateEventStatus(Long id, EventStatus status, Authentication authentication) {
         Event event = getEventById(id);
+        assertOrganizerOwnsEvent(event, authentication);
         event.setStatus(status);
         return eventRepository.save(event);
     }
 
     @Transactional
-    public Event publishEvent(Long id) {
+    public Event publishEvent(Long id, Authentication authentication) {
         Event event = getEventById(id);
+        assertOrganizerOwnsEvent(event, authentication);
         if (event.getStartDate() == null || event.getEndDate() == null) {
             throw new IllegalStateException("Event dates must be set before publishing");
         }
@@ -147,8 +200,9 @@ public class EventService {
     }
 
     @Transactional
-    public void deleteEvent(Long id) {
+    public void deleteEvent(Long id, Authentication authentication) {
         Event event = getEventById(id);
+        assertOrganizerOwnsEvent(event, authentication);
         event.setStatus(EventStatus.CANCELLED);
         eventRepository.save(event);
     }

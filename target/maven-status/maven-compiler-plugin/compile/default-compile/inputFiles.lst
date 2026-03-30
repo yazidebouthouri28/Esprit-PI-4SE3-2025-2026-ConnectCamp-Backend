@@ -380,6 +380,7 @@ C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-Back
 C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\dto\ResetPasswordRequest.java
 C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\entities\Message.java
 C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\dto\request\CertificationItemRequest.java
+C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\dto\request\ChangePasswordRequest.java
 C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\dto\response\CampHighlightResponse.java
 C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\entities\Facture.java
 C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\repositories\ChatRoomRepository.java
@@ -412,6 +413,7 @@ C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-Back
 C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\repositories\ModePaiementRepository.java
 C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\enums\AlertStatus.java
 C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\controllers\RefundController.java
+C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\dto\request\ProfileUpdateRequest.java
 C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\entities\Event.java
 C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\repositories\CampingServiceRepository.java
 C:\Users\ahmed\OneDrive\Desktop\groupe\Esprit-PI-4SE3-2025-2026-ConnectCamp-BackEnd\src\main\java\tn\esprit\projetintegre\services\TransactionService.java

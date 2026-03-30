@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.projetintegre.dto.ApiResponse;
@@ -11,9 +12,11 @@ import tn.esprit.projetintegre.dto.request.OrganizerRequest;
 import tn.esprit.projetintegre.dto.response.OrganizerResponse;
 import tn.esprit.projetintegre.entities.Organizer;
 import tn.esprit.projetintegre.entities.User;
+import tn.esprit.projetintegre.enums.Role;
 import tn.esprit.projetintegre.repositories.OrganizerRepository;
 import tn.esprit.projetintegre.repositories.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,9 +33,18 @@ public class OrganizerController {
     @GetMapping("/by-user/{userId}")
     @Operation(summary = "Get organizer ID by user ID")
     public ResponseEntity<ApiResponse<Long>> getOrganizerIdByUserId(@PathVariable Long userId) {
-        return organizerRepository.findByUser_Id(userId)
-                .map(organizer -> ResponseEntity.ok(ApiResponse.success(organizer.getId())))
-                .orElse(ResponseEntity.notFound().build());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Organizer organizer = organizerRepository.findByUser_Id(userId)
+                .orElseGet(() -> createDefaultOrganizerIfEligible(user));
+
+        if (organizer == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Organizer not found for this user"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(organizer.getId()));
     }
 
     @GetMapping
@@ -127,5 +139,20 @@ public class OrganizerController {
                 .createdAt(o.getCreatedAt())
                 .updatedAt(o.getUpdatedAt())
                 .build();
+    }
+
+    private Organizer createDefaultOrganizerIfEligible(User user) {
+        if (user.getRole() != Role.ORGANIZER) {
+            return null;
+        }
+
+        return organizerRepository.save(Organizer.builder()
+                .user(user)
+                .companyName(user.getName() + "'s Organization")
+                .verified(true)
+                .active(true)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build());
     }
 }

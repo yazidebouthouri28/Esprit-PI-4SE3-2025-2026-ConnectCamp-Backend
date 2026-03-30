@@ -123,6 +123,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .name(user.getName())
                 .role(user.getRole())
+                .organizerId(ensureOrganizerId(user))
                 .build();
     }
 
@@ -148,6 +149,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .name(user.getName())
                 .role(user.getRole())
+                .organizerId(ensureOrganizerId(user))
                 .build();
     }
 
@@ -207,6 +209,23 @@ public class AuthService {
             log.error("Failed to send password reset email to {}", toEmail, ex);
             throw new IllegalStateException("Unable to send verification email. Please try again later.");
         }
+    }
+
+    private Long ensureOrganizerId(User user) {
+        if (user == null || user.getId() == null || user.getRole() != Role.ORGANIZER) {
+            return null;
+        }
+
+        return organizerRepository.findByUser_Id(user.getId())
+                .orElseGet(() -> organizerRepository.save(Organizer.builder()
+                        .user(user)
+                        .companyName(user.getName() + "'s Organization")
+                        .verified(true)
+                        .active(true)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build()))
+                .getId();
     }
 
     private String maskEmail(String email) {

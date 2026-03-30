@@ -39,6 +39,7 @@ tn\esprit\projetintegre\repositories\TicketReservationRepository.class
 tn\esprit\projetintegre\controllers\EventInteractionController.class
 tn\esprit\projetintegre\repositories\InventoryRepository.class
 tn\esprit\projetintegre\controllers\PackController.class
+tn\esprit\projetintegre\dto\request\ProfileUpdateRequest.class
 tn\esprit\projetintegre\services\SiteService.class
 tn\esprit\projetintegre\dto\response\PackResponse.class
 tn\esprit\projetintegre\entities\Participant$ParticipantBuilder.class
@@ -112,6 +113,7 @@ tn\esprit\projetintegre\dto\request\RentalRequest$RentalRequestBuilder.class
 tn\esprit\projetintegre\entities\TicketReservation.class
 tn\esprit\projetintegre\repositories\CategoryRepository.class
 tn\esprit\projetintegre\repositories\ModePaiementRepository.class
+tn\esprit\projetintegre\dto\request\ChangePasswordRequest.class
 tn\esprit\projetintegre\entities\ProductReview$ProductReviewBuilder.class
 tn\esprit\projetintegre\repositories\CandidatureServiceRepository.class
 tn\esprit\projetintegre\dto\request\CartItemRequest$CartItemRequestBuilder.class
@@ -307,6 +309,7 @@ tn\esprit\projetintegre\repositories\TransactionRepository.class
 tn\esprit\projetintegre\entities\CandidatureService.class
 tn\esprit\projetintegre\dto\ChatMessageDTO$UpdateRequest.class
 tn\esprit\projetintegre\dto\ChatRoomDTO$MemberAction$MemberActionBuilder.class
+tn\esprit\projetintegre\dto\request\ProfileUpdateRequest$ProfileUpdateRequestBuilder.class
 tn\esprit\projetintegre\repositories\NotificationRepository.class
 tn\esprit\projetintegre\dto\ResetPasswordRequest$ResetPasswordRequestBuilder.class
 tn\esprit\projetintegre\entities\Wallet.class
@@ -441,6 +444,7 @@ tn\esprit\projetintegre\repositories\CertificationItemRepository.class
 tn\esprit\projetintegre\dto\ChatRoomDTO.class
 tn\esprit\projetintegre\dto\request\CampsiteCreateRequest$CampsiteCreateRequestBuilder.class
 tn\esprit\projetintegre\enums\TypeUrgence.class
+tn\esprit\projetintegre\dto\request\ChangePasswordRequest$ChangePasswordRequestBuilder.class
 tn\esprit\projetintegre\repositories\OrganizerRepository.class
 tn\esprit\projetintegre\dto\request\ParticipantRequest.class
 tn\esprit\projetintegre\dto\response\OrganizerResponse$OrganizerResponseBuilder.class

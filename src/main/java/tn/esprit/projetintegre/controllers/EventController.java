@@ -83,7 +83,9 @@ public class EventController {
     public ResponseEntity<ApiResponse<PageResponse<EventResponse>>> getEventsByOrganizer(
             @PathVariable Long organizerId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            Authentication authentication) {
+        eventService.assertCanAccessOrganizerScope(organizerId, authentication);
         Page<Event> events = eventService.getEventsByOrganizer(organizerId, PageRequest.of(page, size));
         Page<EventResponse> response = events.map(dtoMapper::toEventResponse);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
@@ -106,12 +108,11 @@ public class EventController {
     public ResponseEntity<ApiResponse<EventResponse>> createEvent(
             @Valid @RequestBody EventRequest request,
             Authentication authentication) {
-        String username = authentication != null ? authentication.getName() : null;
         Event created = eventService.createEvent(
                 mapToEvent(request),
                 request.getSiteId(),
                 request.getOrganizerId(),
-                username
+                authentication
         );
         return ResponseEntity.ok(ApiResponse.success("Événement créé avec succès", dtoMapper.toEventResponse(created)));
     }
@@ -121,8 +122,9 @@ public class EventController {
     @Operation(summary = "Mettre à jour un événement")
     public ResponseEntity<ApiResponse<EventResponse>> updateEvent(
             @PathVariable Long id,
-            @Valid @RequestBody EventRequest request) {
-        Event updated = eventService.updateEvent(id, mapToEvent(request));
+            @Valid @RequestBody EventRequest request,
+            Authentication authentication) {
+        Event updated = eventService.updateEvent(id, mapToEvent(request), authentication);
         return ResponseEntity.ok(ApiResponse.success("Événement mis à jour avec succès", dtoMapper.toEventResponse(updated)));
     }
     
@@ -154,24 +156,29 @@ public class EventController {
     @Operation(summary = "Update event status")
     public ResponseEntity<ApiResponse<EventResponse>> updateEventStatus(
             @PathVariable Long id,
-            @RequestParam EventStatus status) {
-        Event updated = eventService.updateEventStatus(id, status);
+            @RequestParam EventStatus status,
+            Authentication authentication) {
+        Event updated = eventService.updateEventStatus(id, status, authentication);
         return ResponseEntity.ok(ApiResponse.success("Event status updated", dtoMapper.toEventResponse(updated)));
     }
 
     @PostMapping("/{id}/publish")
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
     @Operation(summary = "Publish an event")
-    public ResponseEntity<ApiResponse<EventResponse>> publishEvent(@PathVariable Long id) {
-        Event published = eventService.publishEvent(id);
+    public ResponseEntity<ApiResponse<EventResponse>> publishEvent(
+            @PathVariable Long id,
+            Authentication authentication) {
+        Event published = eventService.publishEvent(id, authentication);
         return ResponseEntity.ok(ApiResponse.success("Event published successfully", dtoMapper.toEventResponse(published)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
     @Operation(summary = "Delete/Cancel an event")
-    public ResponseEntity<ApiResponse<Void>> deleteEvent(@PathVariable Long id) {
-        eventService.deleteEvent(id);
+    public ResponseEntity<ApiResponse<Void>> deleteEvent(
+            @PathVariable Long id,
+            Authentication authentication) {
+        eventService.deleteEvent(id, authentication);
         return ResponseEntity.ok(ApiResponse.success("Event cancelled", null));
     }
 }

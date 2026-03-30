@@ -30,6 +30,7 @@ public class UserDTO {
     private String avatar;
     private String bio;
     private String location;
+    private String website;
     private Boolean isActive;
     private Boolean isSuspended;
     private Integer loyaltyPoints;

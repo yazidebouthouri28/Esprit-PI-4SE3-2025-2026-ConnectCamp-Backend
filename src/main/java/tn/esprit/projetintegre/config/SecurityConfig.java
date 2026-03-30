@@ -57,11 +57,14 @@ public class SecurityConfig {
                                 "/actuator/info",
                                 "/actuator/prometheus"
                         ).permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, 
-                                "/api/sites/**", 
-                                "/api/reviews/site/**", 
-                                "/api/camp-highlights/site/**", 
-                                "/api/virtual-tours/site/**", 
+                        .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/api/events/organizer/**"
+                        ).authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/api/sites/**",
+                                "/api/reviews/site/**",
+                                "/api/camp-highlights/site/**",
+                                "/api/virtual-tours/site/**",
                                 "/api/certifications/site/**",
                                 "/api/sponsors/**",
                                 "/api/events/**"
