@@ -53,7 +53,7 @@ public class CampHighlightServiceTest {
         testSite = new Site();
         testSite.setId(1L);
 
-        testRequest = new CampHighlightRequest("Test Title", "Test Content", HighlightCategory.WILDLIFE, "url", true);
+        testRequest = new CampHighlightRequest("Test Title", "Test Content", HighlightCategory.FAUNA, "url", true, 1L);
 
         testHighlight = new CampHighlight();
         testHighlight.setId(10L);
@@ -111,7 +111,7 @@ public class CampHighlightServiceTest {
     void deleteHighlight_Success() {
         when(campHighlightRepository.findById(10L)).thenReturn(Optional.of(testHighlight));
         doNothing().when(campHighlightRepository).delete(testHighlight);
-        doNothing().when(siteImageStorageService).deleteByPublicUrl(any());
+        when(siteImageStorageService.deleteByPublicUrl(any())).thenReturn(true);
 
         campHighlightService.deleteHighlight(10L);
 
