@@ -6,5 +6,6 @@ public enum Role {
     CLIENT,
     ORGANIZER,
     CAMPER,
-    SPONSOR
+    SPONSOR,
+    CUSTOMER // ajouté
 }
