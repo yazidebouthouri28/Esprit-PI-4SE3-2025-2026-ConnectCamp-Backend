@@ -112,8 +112,8 @@ public class EventController {
                 mapToEvent(request),
                 request.getSiteId(),
                 request.getOrganizerId(),
-                authentication
-        );
+                request.getGamificationIds(),
+                authentication);
         return ResponseEntity.ok(ApiResponse.success("Événement créé avec succès", dtoMapper.toEventResponse(created)));
     }
 
@@ -124,10 +124,11 @@ public class EventController {
             @PathVariable Long id,
             @Valid @RequestBody EventRequest request,
             Authentication authentication) {
-        Event updated = eventService.updateEvent(id, mapToEvent(request), authentication);
-        return ResponseEntity.ok(ApiResponse.success("Événement mis à jour avec succès", dtoMapper.toEventResponse(updated)));
+        Event updated = eventService.updateEvent(id, mapToEvent(request), request.getGamificationIds(), authentication);
+        return ResponseEntity
+                .ok(ApiResponse.success("Événement mis à jour avec succès", dtoMapper.toEventResponse(updated)));
     }
-    
+
     private Event mapToEvent(EventRequest request) {
         return Event.builder()
                 .title(request.getTitle())
@@ -169,7 +170,8 @@ public class EventController {
             @PathVariable Long id,
             Authentication authentication) {
         Event published = eventService.publishEvent(id, authentication);
-        return ResponseEntity.ok(ApiResponse.success("Event published successfully", dtoMapper.toEventResponse(published)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Event published successfully", dtoMapper.toEventResponse(published)));
     }
 
     @DeleteMapping("/{id}")
@@ -180,5 +182,35 @@ public class EventController {
             Authentication authentication) {
         eventService.deleteEvent(id, authentication);
         return ResponseEntity.ok(ApiResponse.success("Event cancelled", null));
+    }
+
+    @DeleteMapping("/bulk")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @Operation(summary = "Bulk delete/cancel events")
+    public ResponseEntity<ApiResponse<Void>> bulkDeleteEvents(
+            @RequestBody List<Long> ids,
+            Authentication authentication) {
+        eventService.bulkDeleteEvents(ids, authentication);
+        return ResponseEntity.ok(ApiResponse.success("Events cancelled", null));
+    }
+
+    @GetMapping("/organizer/{organizerId}/stats")
+    @Operation(summary = "Get organizer events statistics")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getOrganizerStats(
+            @PathVariable Long organizerId,
+            Authentication authentication) {
+        eventService.assertCanAccessOrganizerScope(organizerId, authentication);
+        Long totalViews = eventService.getTotalViewsByOrganizer(organizerId);
+        return ResponseEntity.ok(ApiResponse.success(java.util.Map.of(
+                "totalViews", totalViews != null ? totalViews : 0)));
+    }
+
+    @GetMapping("/stats/total-views")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get total views for all events")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getTotalViews() {
+        Long totalViews = eventService.getTotalViewsForAllEvents();
+        return ResponseEntity.ok(ApiResponse.success(java.util.Map.of(
+                "totalViews", totalViews != null ? totalViews : 0)));
     }
 }

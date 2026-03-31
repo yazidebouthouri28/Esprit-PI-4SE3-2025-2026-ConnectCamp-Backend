@@ -29,6 +29,11 @@ public class SiteService {
     }
 
     @Transactional(readOnly = true)
+    public List<Site> getAllSitesAdmin() {
+        return initializeCollections(siteRepository.findAll());
+    }
+
+    @Transactional(readOnly = true)
     public Page<Site> getActiveSites(Pageable pageable) {
         Page<Site> sites = siteRepository.findListedActiveSites(pageable);
         initializeCollections(sites.getContent());
@@ -89,18 +94,42 @@ public class SiteService {
     public Site updateSite(Long id, Site siteDetails) {
         Site site = getSiteById(id);
 
-        if (siteDetails.getName() != null) site.setName(siteDetails.getName());
-        if (siteDetails.getDescription() != null) site.setDescription(siteDetails.getDescription());
-        if (siteDetails.getType() != null) site.setType(siteDetails.getType());
-        if (siteDetails.getAddress() != null) site.setAddress(siteDetails.getAddress());
-        if (siteDetails.getCity() != null) site.setCity(siteDetails.getCity());
-        if (siteDetails.getCountry() != null) site.setCountry(siteDetails.getCountry());
-        if (siteDetails.getCapacity() != null) site.setCapacity(siteDetails.getCapacity());
-        if (siteDetails.getPricePerNight() != null) site.setPricePerNight(siteDetails.getPricePerNight());
-        if (siteDetails.getImages() != null) site.setImages(siteDetails.getImages());
-        if (siteDetails.getAmenities() != null) site.setAmenities(siteDetails.getAmenities());
-        if (siteDetails.getContactPhone() != null) site.setContactPhone(siteDetails.getContactPhone());
-        if (siteDetails.getContactEmail() != null) site.setContactEmail(siteDetails.getContactEmail());
+        if (siteDetails.getName() != null)
+            site.setName(siteDetails.getName());
+        if (siteDetails.getDescription() != null)
+            site.setDescription(siteDetails.getDescription());
+        if (siteDetails.getType() != null)
+            site.setType(siteDetails.getType());
+        if (siteDetails.getAddress() != null)
+            site.setAddress(siteDetails.getAddress());
+        if (siteDetails.getCity() != null)
+            site.setCity(siteDetails.getCity());
+        if (siteDetails.getCountry() != null)
+            site.setCountry(siteDetails.getCountry());
+        if (siteDetails.getCapacity() != null)
+            site.setCapacity(siteDetails.getCapacity());
+        if (siteDetails.getPricePerNight() != null)
+            site.setPricePerNight(siteDetails.getPricePerNight());
+        if (siteDetails.getImages() != null)
+            site.setImages(siteDetails.getImages());
+        if (siteDetails.getAmenities() != null)
+            site.setAmenities(siteDetails.getAmenities());
+        if (siteDetails.getContactPhone() != null)
+            site.setContactPhone(siteDetails.getContactPhone());
+        if (siteDetails.getContactEmail() != null)
+            site.setContactEmail(siteDetails.getContactEmail());
+        if (siteDetails.getLatitude() != null)
+            site.setLatitude(siteDetails.getLatitude());
+        if (siteDetails.getLongitude() != null)
+            site.setLongitude(siteDetails.getLongitude());
+        if (siteDetails.getIsActive() != null)
+            site.setIsActive(siteDetails.getIsActive());
+        if (siteDetails.getCheckInTime() != null)
+            site.setCheckInTime(siteDetails.getCheckInTime());
+        if (siteDetails.getCheckOutTime() != null)
+            site.setCheckOutTime(siteDetails.getCheckOutTime());
+        if (siteDetails.getHouseRules() != null)
+            site.setHouseRules(siteDetails.getHouseRules());
 
         return siteRepository.save(site);
     }

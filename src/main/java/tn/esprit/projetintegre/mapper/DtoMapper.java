@@ -365,6 +365,7 @@ public class DtoMapper {
                 .organizerName(entity.getOrganizer() != null ? entity.getOrganizer().getCompanyName() : null)
                 .isFree(entity.getIsFree())
                 .viewCount(entity.getViewCount())
+                .gamifications(toGamificationResponseList(entity.getGamifications()))
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -470,13 +471,37 @@ public class DtoMapper {
                 .contactPhone(entity.getContactPhone())
                 .contactEmail(entity.getContactEmail())
                 .isActive(entity.getIsActive())
+                .checkInTime(entity.getCheckInTime())
+                .checkOutTime(entity.getCheckOutTime())
+                .houseRules(entity.getHouseRules())
                 .rating(entity.getRating())
                 .reviewCount(entity.getReviewCount())
-                .ownerId(null)
-                .ownerName(null)
+                .ownerId(entity.getOwner() != null ? entity.getOwner().getId() : null)
+                .ownerName(entity.getOwner() != null ? entity.getOwner().getName() : null)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
+    }
+
+    // Gamification Mapping
+    public GamificationResponse toGamificationResponse(Gamification entity) {
+        if (entity == null)
+            return null;
+        return GamificationResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .icon(entity.getIcon())
+                .pointsValue(entity.getPointsValue())
+                .organizerId(entity.getOrganizer() != null ? entity.getOrganizer().getId() : null)
+                .organizerName(entity.getOrganizer() != null ? entity.getOrganizer().getCompanyName() : null)
+                .build();
+    }
+
+    public List<GamificationResponse> toGamificationResponseList(java.util.Collection<Gamification> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toGamificationResponse).collect(Collectors.toList());
     }
 
     // Achievement Mapping

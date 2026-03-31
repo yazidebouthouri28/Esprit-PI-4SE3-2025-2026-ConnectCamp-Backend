@@ -100,25 +100,16 @@ public class EventInteractionService {
 
         log.info("INTERACTION COUNTERS: event={}, likes={}, dislikes={}", event.getId(), likes, dislikes);
 
-        // Custom rating logic:
-        // - Only likes (X=0, Y>0) -> 5 stars
-        // - Only dislikes (Y=0, X>0) -> 0 stars
-        // - Otherwise -> (|Y-X|)/2 stars (Rounded UP)
-        if (likes > 0 && dislikes == 0) {
-            event.setRating(BigDecimal.valueOf(5));
-        } else if (likes == 0 && dislikes > 0) {
-            event.setRating(BigDecimal.valueOf(0));
-        } else if (likes > 0 && dislikes > 0) {
-            long diff = Math.abs(likes - dislikes);
-            // Support half stars (0.5, 1.5, etc.)
-            BigDecimal rating = BigDecimal.valueOf(diff).divide(BigDecimal.valueOf(2), 1, RoundingMode.HALF_UP);
-            // Cap at 5 stars
-            if (rating.compareTo(BigDecimal.valueOf(5)) > 0) {
-                rating = BigDecimal.valueOf(5);
-            }
+        // Standard star rating logic:
+        // - (likes / (likes + dislikes)) * 5
+        if (likes + dislikes > 0) {
+            BigDecimal total = BigDecimal.valueOf(likes + dislikes);
+            BigDecimal rating = BigDecimal.valueOf(likes)
+                    .multiply(BigDecimal.valueOf(5))
+                    .divide(total, 1, RoundingMode.HALF_UP);
             event.setRating(rating);
         } else {
-            event.setRating(null);
+            event.setRating(BigDecimal.ZERO);
         }
 
         log.info("RATING FINAL: event={}, likes={}, dislikes={}, rating={}",

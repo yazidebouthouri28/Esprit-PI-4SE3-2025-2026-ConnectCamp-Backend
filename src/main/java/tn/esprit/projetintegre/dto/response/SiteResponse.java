@@ -27,6 +27,11 @@ public class SiteResponse {
     private String contactPhone;
     private String contactEmail;
     private Boolean isActive;
+
+    private String checkInTime;
+    private String checkOutTime;
+    private String houseRules;
+
     private BigDecimal rating;
     private Integer reviewCount;
     private Long ownerId;

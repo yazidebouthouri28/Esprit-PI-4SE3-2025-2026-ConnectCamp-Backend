@@ -14,7 +14,7 @@ public class SiteRequest {
     @NotBlank(message = "Site name is required")
     @Size(min = 3, max = 200, message = "Site name must be between 3 and 200 characters")
     private String name;
-    
+
     @Size(max = 2000, message = "Description must not exceed 2000 characters")
     private String description;
 
@@ -53,7 +53,11 @@ public class SiteRequest {
     private String contactEmail;
 
     private Boolean isActive;
-    
+
+    private String checkInTime;
+    private String checkOutTime;
+    private String houseRules;
+
     @NotNull(message = "Owner ID is required")
     private Long ownerId;
 }

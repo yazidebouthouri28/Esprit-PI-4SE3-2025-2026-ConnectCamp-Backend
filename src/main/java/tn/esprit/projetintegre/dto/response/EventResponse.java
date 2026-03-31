@@ -27,13 +27,14 @@ public class EventResponse {
     private List<String> images;
     private String thumbnail;
     private Integer viewCount;
-    private Double latitude;      // ← EST-CE QUE C’EST ICI ?
+    private Double latitude; // ← EST-CE QUE C’EST ICI ?
     private Double longitude;
     private EventStatus status;
     private Long siteId;
     private String siteName;
     private Long organizerId;
     private String organizerName;
+    private List<GamificationResponse> gamifications;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

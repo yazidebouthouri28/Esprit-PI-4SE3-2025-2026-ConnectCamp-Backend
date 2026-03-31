@@ -47,6 +47,14 @@ public class SiteController {
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
     }
 
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get all sites (Admin only)")
+    public ResponseEntity<ApiResponse<List<SiteResponse>>> getAllSitesAdmin() {
+        List<Site> sites = siteService.getAllSitesAdmin();
+        return ResponseEntity.ok(ApiResponse.success(dtoMapper.toSiteResponseList(sites)));
+    }
+
     @GetMapping("/summary")
     @Operation(summary = "Get active site summaries")
     public ResponseEntity<ApiResponse<List<SiteSummaryResponse>>> getSiteSummaries() {
@@ -133,7 +141,8 @@ public class SiteController {
             @PathVariable Long id,
             @RequestParam(value = "files", required = false) MultipartFile[] files) {
         if (files == null || files.length == 0) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("At least one image file is required (field name: files)"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("At least one image file is required (field name: files)"));
         }
         List<MultipartFile> list = Arrays.stream(files)
                 .filter(f -> f != null && !f.isEmpty())

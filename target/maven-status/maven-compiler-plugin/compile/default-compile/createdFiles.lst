@@ -210,6 +210,7 @@ tn\esprit\projetintegre\enums\UniteTarification.class
 tn\esprit\projetintegre\repositories\ReservationHistoryRepository.class
 tn\esprit\projetintegre\dto\request\CampingServiceRequest$CampingServiceRequestBuilder.class
 tn\esprit\projetintegre\dto\response\CouponResponse.class
+tn\esprit\projetintegre\entities\Gamification.class
 tn\esprit\projetintegre\enums\EventType.class
 tn\esprit\projetintegre\entities\RentalProduct.class
 tn\esprit\projetintegre\entities\EmailNotification$EmailNotificationBuilder.class
@@ -276,6 +277,7 @@ tn\esprit\projetintegre\repositories\EventInteractionRepository.class
 tn\esprit\projetintegre\repositories\PromotionRepository.class
 tn\esprit\projetintegre\repositories\SponsorshipRepository.class
 tn\esprit\projetintegre\enums\OrderStatus.class
+tn\esprit\projetintegre\services\GamificationService.class
 tn\esprit\projetintegre\entities\WishlistItem.class
 tn\esprit\projetintegre\dto\request\EventCommentRequest$EventCommentRequestBuilder.class
 tn\esprit\projetintegre\enums\PricingUnit.class
@@ -295,6 +297,7 @@ tn\esprit\projetintegre\dto\response\CartResponse$CartResponseBuilder.class
 tn\esprit\projetintegre\dto\request\OrganizerRequest$OrganizerRequestBuilder.class
 tn\esprit\projetintegre\repositories\CartRepository.class
 tn\esprit\projetintegre\repositories\ProductRepository.class
+tn\esprit\projetintegre\dto\request\GamificationRequest.class
 tn\esprit\projetintegre\repositories\OrderStatusHistoryRepository.class
 tn\esprit\projetintegre\dto\response\MissionResponse.class
 tn\esprit\projetintegre\entities\Wallet$WalletBuilder.class
@@ -311,6 +314,7 @@ tn\esprit\projetintegre\dto\request\TimeSlotRequest.class
 tn\esprit\projetintegre\repositories\CouponUsageRepository.class
 tn\esprit\projetintegre\dto\EmergencyAlertDTO$UpdateRequest.class
 tn\esprit\projetintegre\dto\response\CertificationResponse$CertificationResponseBuilder.class
+tn\esprit\projetintegre\dto\response\GamificationResponse$GamificationResponseBuilder.class
 tn\esprit\projetintegre\entities\EventScheduleItem.class
 tn\esprit\projetintegre\entities\Warehouse$WarehouseBuilder.class
 tn\esprit\projetintegre\controllers\AlertController.class
@@ -324,6 +328,7 @@ tn\esprit\projetintegre\entities\PromotionUsage.class
 tn\esprit\projetintegre\entities\Transaction$TransactionBuilder.class
 tn\esprit\projetintegre\repositories\ServiceDetailRepository.class
 tn\esprit\projetintegre\entities\Campsite$CampsiteBuilder.class
+tn\esprit\projetintegre\entities\Gamification$GamificationBuilder.class
 tn\esprit\projetintegre\services\AlertService.class
 tn\esprit\projetintegre\dto\response\RefundResponse$RefundResponseBuilder.class
 tn\esprit\projetintegre\dto\response\CampHighlightResponse.class
@@ -605,6 +610,7 @@ tn\esprit\projetintegre\dto\request\ReservationRequest.class
 tn\esprit\projetintegre\dto\response\ReviewResponse$ReviewResponseBuilder.class
 tn\esprit\projetintegre\entities\EmergencyProtocol$EmergencyProtocolBuilder.class
 tn\esprit\projetintegre\exception\InsufficientStockException.class
+tn\esprit\projetintegre\repositories\GamificationRepository.class
 tn\esprit\projetintegre\services\CampHighlightService.class
 tn\esprit\projetintegre\repositories\MissionRepository.class
 tn\esprit\projetintegre\dto\request\CertificationItemRequest.class
@@ -620,6 +626,7 @@ tn\esprit\projetintegre\entities\ForumArticle$ForumArticleBuilder.class
 tn\esprit\projetintegre\dto\response\SiteSummaryResponse$SiteSummaryResponseBuilder.class
 tn\esprit\projetintegre\entities\RouteGuide$RouteGuideBuilder.class
 tn\esprit\projetintegre\services\EventInteractionService.class
+tn\esprit\projetintegre\dto\response\GamificationResponse.class
 tn\esprit\projetintegre\entities\User$UserBuilder.class
 tn\esprit\projetintegre\entities\Subscription$SubscriptionBuilder.class
 tn\esprit\projetintegre\repositories\ChatRoomRepository.class
@@ -634,8 +641,10 @@ tn\esprit\projetintegre\dto\response\NotificationResponse$NotificationResponseBu
 tn\esprit\projetintegre\dto\request\RentalRequest.class
 tn\esprit\projetintegre\dto\response\ProductResponse.class
 tn\esprit\projetintegre\dto\response\OrderItemResponse.class
+tn\esprit\projetintegre\dto\request\GamificationRequest$GamificationRequestBuilder.class
 tn\esprit\projetintegre\controllers\CampHighlightController.class
 tn\esprit\projetintegre\dto\response\PackResponse$PackResponseBuilder.class
+tn\esprit\projetintegre\controllers\GamificationController.class
 tn\esprit\projetintegre\entities\Sponsor$SponsorBuilder.class
 tn\esprit\projetintegre\repositories\VirtualTourRepository.class
 tn\esprit\projetintegre\repositories\RouteGuideRepository.class

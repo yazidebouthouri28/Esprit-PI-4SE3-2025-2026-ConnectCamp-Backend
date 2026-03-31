@@ -73,6 +73,11 @@ public class Site {
     private String contactEmail;
     private String website;
 
+    private String checkInTime;
+    private String checkOutTime;
+    @Column(length = 2000)
+    private String houseRules;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
