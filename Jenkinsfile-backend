@@ -10,14 +10,10 @@ pipeline {
     tools {
         maven 'Maven3'
         jdk   'JDK17'
-        // Add the SonarQube Scanner tool if you want to use the standalone scanner.
-        // If you installed it in Jenkins with name "SonarScanner", reference it here.
-        // (Optional: you can also use the tool step directly in the stage.)
-        sonarScanner 'SonarScanner'
+        sonarRunner 'SonarScanner'   // corrected
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 git branch: 'integrationBranch4',
@@ -32,14 +28,9 @@ pipeline {
             }
         }
 
-        // === NEW STAGE: SonarQube Analysis ===
         stage('SonarQube Analysis') {
             steps {
-                // The withSonarQubeEnv step sets the connection to your SonarQube server
-                // (configured in Jenkins > Configure System as "SonarQube").
                 withSonarQubeEnv('SonarQube') {
-                    // The scanner will automatically find sonar-project.properties in the root.
-                    // If the properties file is not yet committed, you can pass parameters inline.
                     sh 'sonar-scanner'
                 }
             }
