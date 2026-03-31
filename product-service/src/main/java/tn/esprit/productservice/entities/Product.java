@@ -1,5 +1,6 @@
 package tn.esprit.productservice.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -65,6 +66,8 @@ public class Product {
     @Size(max = 100)
     private String brand;
 
+    // FIX : category est LAZY, @JsonIgnoreProperties casse la boucle
+    // Product -> category -> products (ignoré) -> OK
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     @JsonIgnoreProperties({"subcategories", "products", "parent", "hibernateLazyInitializer", "handler"})
@@ -88,7 +91,6 @@ public class Product {
     @Builder.Default
     private Boolean trackInventory = true;
 
-    // FIX: EAGER - @ElementCollection is lazy by default
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "image_url")
@@ -139,18 +141,18 @@ public class Product {
     @Size(max = 100)
     private String dimensions;
 
-    // FIX: EAGER - @ElementCollection is lazy by default
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "product_tags", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "tag")
     @Builder.Default
     private List<String> tags = new ArrayList<>();
 
-    // FIX: EAGER - reviews are serialized by ReviewController via the mapper,
-    // so they must be loaded. @JsonIgnoreProperties breaks the circular loop.
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    // FIX : @JsonIgnore sur reviews dans Product pour casser la boucle
+    // Product -> reviews -> ProductReview -> product (ignoré) -> OK
+    // Les reviews sont exposées via leur propre endpoint, pas via Product directement
+    @JsonIgnore
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
-    @JsonIgnoreProperties({"product", "hibernateLazyInitializer", "handler"})
     private List<ProductReview> reviews = new ArrayList<>();
 
     @Column(updatable = false)

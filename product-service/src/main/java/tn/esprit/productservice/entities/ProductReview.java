@@ -28,8 +28,8 @@ public class ProductReview {
     @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
-    // FIX: @JsonIgnoreProperties prevents Jackson from traversing into
-    // Product.reviews (circular) and Product.images/tags (lazy collections)
+    // FIX : @JsonIgnoreProperties casse la boucle
+    // ProductReview -> product -> reviews (ignoré) -> OK
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     @JsonIgnoreProperties({"reviews", "images", "tags", "category", "hibernateLazyInitializer", "handler"})
@@ -49,7 +49,6 @@ public class ProductReview {
     @Column(length = 2000)
     private String comment;
 
-    // FIX: EAGER so Jackson can serialize without an open Hibernate session
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "review_images", joinColumns = @JoinColumn(name = "review_id"))
     @Column(name = "image_url")

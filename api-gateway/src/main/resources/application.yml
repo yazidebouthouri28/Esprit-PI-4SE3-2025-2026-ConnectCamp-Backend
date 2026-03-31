@@ -25,6 +25,13 @@ spring:
               - OPTIONS
             allowedHeaders: "*"
             allowCredentials: true
+            exposedHeaders:
+              - Authorization
+              - X-User-Id
+              - X-User-Email
+              - X-User-Role
+              - X-User-Name
+              - X-User-Username
             maxAge: 3600
 
       # ============================
@@ -37,7 +44,7 @@ spring:
       # Route Definitions
       # ============================
       routes:
-        # --- Authentication Routes (NO JWT required) ---
+        # --- Authentication Routes (public, no JWT required) ---
         - id: auth-service
           uri: ${USER_SERVICE_URL:http://localhost:8084}
           predicates:
@@ -52,9 +59,9 @@ spring:
             - Path=/api/users/**, /api/wallets/**, /api/wishlists/**, /api/transactions/**
           filters:
             - StripPrefix=0
-            - JwtAuthentication
+            - name: JwtAuthentication
 
-        # --- Product Service Public Routes (no auth for browsing) ---
+        # --- Product Service Public Routes (GET only, no auth) ---
         - id: product-service-public
           uri: ${PRODUCT_SERVICE_URL:http://localhost:8082}
           predicates:
@@ -62,16 +69,17 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=0
-          order: -1  # Higher priority (processed first)
+          order: -1
 
         # --- Product Service Routes (protected for writes) ---
-        - id: product-service
+        - id: product-service-protected
           uri: ${PRODUCT_SERVICE_URL:http://localhost:8082}
           predicates:
             - Path=/api/products/**, /api/categories/**, /api/reviews/**
+            - Method=POST,PUT,DELETE,PATCH
           filters:
             - StripPrefix=0
-            - JwtAuthentication
+            - name: JwtAuthentication
 
         # --- Order Service Routes (protected) ---
         - id: order-service
@@ -80,7 +88,7 @@ spring:
             - Path=/api/orders/**, /api/cart/**, /api/shipping-addresses/**, /api/inventory/**, /api/warehouses/**, /api/rentals/**
           filters:
             - StripPrefix=0
-            - JwtAuthentication
+            - name: JwtAuthentication
 
   # ============================
   # Redis Configuration
@@ -95,6 +103,16 @@ spring:
 # ============================
 jwt:
   secret: ${JWT_SECRET:your-256-bit-secret-key-change-this-in-production-environment}
+
+# ============================
+# Spring Security (Resource Server) Optional
+# ============================
+# Si tu veux aussi activer Spring Security JWT validation dans le gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          secret: ${JWT_SECRET:your-256-bit-secret-key-change-this-in-production-environment}
 
 # ============================
 # Actuator
@@ -116,4 +134,5 @@ management:
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG
     tn.esprit.gateway: DEBUG
