@@ -14,7 +14,7 @@ public class CampHighlightRequest {
     private String title;
 
     @NotBlank(message = "Content is required")
-    @Size(max = 5000, message = "Content cannot exceed 5000 characters")
+    @Size(min = 10, max = 5000, message = "Content must be between 10 and 5000 characters")
     private String content;
 
     @NotNull(message = "Category is required")
