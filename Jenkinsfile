@@ -6,13 +6,10 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REGISTRY = 'docker.io'
         DOCKER_USERNAME = 'azizbenabdallah'
         DOCKER_CREDENTIALS = 'docker-hub-credentials'
 
         IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT?.take(7) ?: 'latest'}"
-
-        MAVEN_OPTS = '-Xmx1024m -XX:+TieredCompilation -XX:TieredStopAtLevel=1'
 
         USER_SERVICE    = 'user-service'
         PRODUCT_SERVICE = 'product-service'
@@ -25,12 +22,6 @@ pipeline {
         disableConcurrentBuilds()
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timestamps()
-        ansiColor('xterm')
-    }
-
-    tools {
-        maven 'Maven-3.9'
-        jdk 'JDK-17'
     }
 
     stages {
@@ -180,9 +171,8 @@ pipeline {
                     steps {
                         dir('user-service') {
                             sh """
-                            docker build \
-                            -t ${DOCKER_USERNAME}/${USER_SERVICE}:${IMAGE_TAG} \
-                            -t ${DOCKER_USERNAME}/${USER_SERVICE}:latest .
+                            docker build -t ${DOCKER_USERNAME}/${USER_SERVICE}:${IMAGE_TAG} \
+                                         -t ${DOCKER_USERNAME}/${USER_SERVICE}:latest .
                             """
                         }
                     }
@@ -192,9 +182,8 @@ pipeline {
                     steps {
                         dir('product-service') {
                             sh """
-                            docker build \
-                            -t ${DOCKER_USERNAME}/${PRODUCT_SERVICE}:${IMAGE_TAG} \
-                            -t ${DOCKER_USERNAME}/${PRODUCT_SERVICE}:latest .
+                            docker build -t ${DOCKER_USERNAME}/${PRODUCT_SERVICE}:${IMAGE_TAG} \
+                                         -t ${DOCKER_USERNAME}/${PRODUCT_SERVICE}:latest .
                             """
                         }
                     }
@@ -204,9 +193,8 @@ pipeline {
                     steps {
                         dir('order-service') {
                             sh """
-                            docker build \
-                            -t ${DOCKER_USERNAME}/${ORDER_SERVICE}:${IMAGE_TAG} \
-                            -t ${DOCKER_USERNAME}/${ORDER_SERVICE}:latest .
+                            docker build -t ${DOCKER_USERNAME}/${ORDER_SERVICE}:${IMAGE_TAG} \
+                                         -t ${DOCKER_USERNAME}/${ORDER_SERVICE}:latest .
                             """
                         }
                     }
@@ -216,9 +204,8 @@ pipeline {
                     steps {
                         dir('api-gateway') {
                             sh """
-                            docker build \
-                            -t ${DOCKER_USERNAME}/${API_GATEWAY}:${IMAGE_TAG} \
-                            -t ${DOCKER_USERNAME}/${API_GATEWAY}:latest .
+                            docker build -t ${DOCKER_USERNAME}/${API_GATEWAY}:${IMAGE_TAG} \
+                                         -t ${DOCKER_USERNAME}/${API_GATEWAY}:latest .
                             """
                         }
                     }
@@ -231,7 +218,6 @@ pipeline {
         // ========================
         stage('Push Images') {
             steps {
-
                 script {
 
                     docker.withRegistry('', DOCKER_CREDENTIALS) {
@@ -244,11 +230,10 @@ pipeline {
                         ]
 
                         for (svc in services) {
-
                             sh "docker push ${DOCKER_USERNAME}/${svc}:${IMAGE_TAG}"
                             sh "docker push ${DOCKER_USERNAME}/${svc}:latest"
-
                         }
+
                     }
                 }
             }
@@ -312,18 +297,12 @@ pipeline {
                 """
             }
         }
-
     }
 
-    // ========================
-    // Post
-    // ========================
     post {
 
         always {
-
             archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true, allowEmptyArchive: true
-
             sh 'docker image prune -f || true'
         }
 
