@@ -1,7 +1,3 @@
-```groovy
-// ============================================================
-//  Configuration centrale
-// ============================================================
 def SERVICES = [
     [name: 'product-service', deployment: 'deployment/product-service'],
     [name: 'order-service',   deployment: 'deployment/order-service'],
@@ -29,9 +25,6 @@ pipeline {
 
     stages {
 
-        // ============================================================
-        // CHECKOUT RAPIDE (shallow clone)
-        // ============================================================
         stage('Checkout') {
             steps {
                 deleteDir()
@@ -53,9 +46,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // BUILD MAVEN PARALLELE
-        // ============================================================
         stage('Build & Package') {
             steps {
                 script {
@@ -74,68 +64,50 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // DOCKER BUILD + PUSH
-        // ============================================================
         stage('Docker Build & Push') {
             steps {
                 script {
-
                     sh "docker login -u ${DOCKER_USER} -p '${DOCKER_PASS}'"
 
                     parallel SERVICES.collectEntries { svc ->
                         def service = svc
                         ["Docker › ${service.name}": {
-
                             timeout(time: 10, unit: 'MINUTES') {
-
                                 sh """
-                                docker build \
-                                -t ${DOCKER_REPO}-${service.name}:${BUILD_NUMBER} \
-                                -t ${DOCKER_REPO}-${service.name}:latest \
-                                ./${service.name}
+                                    docker build \
+                                        -t ${DOCKER_REPO}-${service.name}:${BUILD_NUMBER} \
+                                        -t ${DOCKER_REPO}-${service.name}:latest \
+                                        ./${service.name}
                                 """
-
                                 retry(3) {
                                     sh """
-                                    docker push ${DOCKER_REPO}-${service.name}:${BUILD_NUMBER}
-                                    docker push ${DOCKER_REPO}-${service.name}:latest
+                                        docker push ${DOCKER_REPO}-${service.name}:${BUILD_NUMBER}
+                                        docker push ${DOCKER_REPO}-${service.name}:latest
                                     """
                                 }
-
                             }
                         }]
                     }
 
-                    sh "docker logout || true"
+                    sh 'docker logout || true'
                 }
             }
         }
 
-        // ============================================================
-        // DEPLOY KUBERNETES
-        // ============================================================
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-
                     sh 'kubectl apply -f k8s/'
 
                     parallel SERVICES.collectEntries { svc ->
                         def service = svc
                         ["Rollout › ${service.name}": {
-
                             timeout(time: 5, unit: 'MINUTES') {
-
                                 try {
-
                                     sh "kubectl rollout status ${service.deployment} --timeout=${K8S_ROLLOUT_TIMEOUT}"
-
                                 } catch (err) {
-
                                     echo "⚠️ Rollout échoué pour ${service.name}"
                                     sh "kubectl rollout undo ${service.deployment}"
-
                                     error("Rollback déclenché : ${service.name}")
                                 }
                             }
@@ -146,23 +118,16 @@ pipeline {
         }
     }
 
-    // ============================================================
-    // POST ACTIONS
-    // ============================================================
     post {
-
         always {
             archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
             cleanWs()
         }
-
         success {
             echo "✅ Build ${BUILD_NUMBER} terminé avec succès"
         }
-
         failure {
             echo "❌ Build ${BUILD_NUMBER} échoué"
         }
     }
 }
-```
