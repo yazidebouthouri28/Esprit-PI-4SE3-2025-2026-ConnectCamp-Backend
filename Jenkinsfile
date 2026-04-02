@@ -1,8 +1,5 @@
 def SERVICES = [
-    [name: 'product-service', deployment: 'deployment/product-service'],
-    [name: 'order-service',   deployment: 'deployment/order-service'],
     [name: 'api-gateway',     deployment: 'deployment/api-gateway'],
-    [name: 'user-service',    deployment: 'deployment/user-service']
 ]
 
 pipeline {
