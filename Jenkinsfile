@@ -1,8 +1,11 @@
 def SERVICES = [
-    [name: 'api-gateway',     deployment: 'deployment/api-gateway']
+    [name: 'api-gateway',     deployment: 'deployment/api-gateway'],
+    [name: 'order-service',   deployment: 'deployment/order-service'],
+    [name: 'product-service', deployment: 'deployment/product-service'],
+    [name: 'user-service',    deployment: 'deployment/user-service']
 ]
 
-def REPO_DIR = '/var/lib/jenkins/projet-backend'   // ✅ dossier Jenkins
+def REPO_DIR = '/var/lib/jenkins/projet-backend'
 
 pipeline {
     agent any
@@ -13,6 +16,7 @@ pipeline {
         DOCKER_PASS         = "jc-i5jxUL\$H36N4"
         DOCKER_IMAGE_TAG    = "${BUILD_NUMBER}"
         MVN_OPTS            = "-T 1C -B -Dmaven.repo.local=/var/lib/jenkins/.m2/repository -Dmaven.wagon.http.retryHandler.count=5 -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 -Dmaven.wagon.http.pool=false"
+        K8S_NAMESPACE       = "devops"
         K8S_ROLLOUT_TIMEOUT = "240m"
     }
 
@@ -70,10 +74,10 @@ pipeline {
                                         ${REPO_DIR}/${service.name}
                                 """
                                 retry(3) {
-                                    sh """
-                                        docker push ${DOCKER_REPO}-${service.name}:${DOCKER_IMAGE_TAG}
-                                        docker push ${DOCKER_REPO}-${service.name}:latest
-                                    """
+                                    sh "docker push ${DOCKER_REPO}-${service.name}:${DOCKER_IMAGE_TAG}"
+                                }
+                                retry(3) {
+                                    sh "docker push ${DOCKER_REPO}-${service.name}:latest"
                                 }
                             }
                         }]
@@ -94,10 +98,10 @@ pipeline {
                         ["Rollout › ${service.name}": {
                             timeout(time: 30, unit: 'MINUTES') {
                                 try {
-                                    sh "kubectl rollout status ${service.deployment} --timeout=${K8S_ROLLOUT_TIMEOUT}"
+                                    sh "kubectl rollout status ${service.deployment} -n ${K8S_NAMESPACE} --timeout=${K8S_ROLLOUT_TIMEOUT}"
                                 } catch (err) {
                                     echo "⚠️ Rollout échoué pour ${service.name}"
-                                    sh "kubectl rollout undo ${service.deployment}"
+                                    sh "kubectl rollout undo ${service.deployment} -n ${K8S_NAMESPACE}"
                                     error("Rollback déclenché : ${service.name}")
                                 }
                             }
