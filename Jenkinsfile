@@ -1,8 +1,8 @@
 def SERVICES = [
-    [name: 'api-gateway', deployment: 'deployment/api-gateway']
+    [name: 'api-gateway',     deployment: 'deployment/api-gateway']
 ]
 
-def REPO_DIR = '/home/vagrant/projet-backend'
+def REPO_DIR = '/var/lib/jenkins/projet-backend'   // ✅ dossier Jenkins
 
 pipeline {
     agent any
@@ -12,7 +12,7 @@ pipeline {
         DOCKER_USER         = "azizbenabdallah"
         DOCKER_PASS         = "jc-i5jxUL\$H36N4"
         DOCKER_IMAGE_TAG    = "${BUILD_NUMBER}"
-        MVN_OPTS            = "-T 1C -B -Dmaven.repo.local=/home/vagrant/.m2/repository -Dmaven.wagon.http.retryHandler.count=5 -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 -Dmaven.wagon.http.pool=false"
+        MVN_OPTS            = "-T 1C -B -Dmaven.repo.local=/var/lib/jenkins/.m2/repository -Dmaven.wagon.http.retryHandler.count=5 -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 -Dmaven.wagon.http.pool=false"
         K8S_ROLLOUT_TIMEOUT = "240m"
     }
 
