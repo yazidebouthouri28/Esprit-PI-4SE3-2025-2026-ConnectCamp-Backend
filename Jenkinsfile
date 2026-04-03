@@ -32,8 +32,13 @@ pipeline {
         stage('Checkout') {
             steps {
                 dir("${REPO_DIR}") {
-                    sh 'git fetch --depth 1 origin AzizBack'
-                    sh 'git reset --hard origin/AzizBack'
+                    sh '''
+                        git config http.postBuffer 524288000
+                        git config http.lowSpeedLimit 0
+                        git config http.lowSpeedTime 999999
+                        git fetch --depth 1 --filter=blob:limit=1m origin AzizBack
+                        git reset --hard origin/AzizBack
+                    '''
                 }
             }
         }
