@@ -1,8 +1,8 @@
 def SERVICES = [
-    [name: 'api-gateway',     deployment: 'deployment/api-gateway'],
-    [name: 'order-service',   deployment: 'deployment/order-service'],
-    [name: 'product-service', deployment: 'deployment/product-service'],
-    [name: 'user-service',    deployment: 'deployment/user-service']
+    [name: 'api-gateway',     deployment: 'deployment/api-gateway',     port: '8088'],
+    [name: 'order-service',   deployment: 'deployment/order-service',   port: '8083'],
+    [name: 'product-service', deployment: 'deployment/product-service', port: '8082'],
+    [name: 'user-service',    deployment: 'deployment/user-service',    port: '8081']
 ]
 
 def REPO_DIR = '/var/lib/jenkins/projet-backend'
@@ -39,6 +39,26 @@ pipeline {
                         git fetch --depth 1 --filter=blob:limit=1m origin AzizBack
                         git reset --hard origin/AzizBack
                     '''
+                }
+                // ✅ Réappliquer les Dockerfiles optimisés après chaque git reset
+                script {
+                    SERVICES.each { svc ->
+                        def service = svc
+                        writeFile file: "${REPO_DIR}/${service.name}/Dockerfile", text: """FROM eclipse-temurin:17-jre-alpine AS layers
+WORKDIR /app
+COPY target/*.jar app.jar
+RUN java -Djarmode=layertools -jar app.jar extract
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=layers /app/dependencies/ ./
+COPY --from=layers /app/spring-boot-loader/ ./
+COPY --from=layers /app/snapshot-dependencies/ ./
+COPY --from=layers /app/application/ ./
+EXPOSE ${service.port}
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+"""
+                    }
                 }
             }
         }
