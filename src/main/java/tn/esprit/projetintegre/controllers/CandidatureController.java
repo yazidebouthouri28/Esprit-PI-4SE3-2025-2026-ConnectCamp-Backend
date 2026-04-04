@@ -20,7 +20,7 @@ public class CandidatureController {
     private final CandidatureServiceLogic candidatureServiceLogic;
 
     @PostMapping("/apply/{eventServiceId}")
-    @PreAuthorize("hasAnyRole('PARTICIPANT', 'CAMPER')")
+    @PreAuthorize("hasRole('PARTICIPANT')")
     @Operation(summary = "Participant applies for a specific service in an event")
     public ResponseEntity<ApiResponse<Long>> apply(
             @PathVariable Long eventServiceId,
