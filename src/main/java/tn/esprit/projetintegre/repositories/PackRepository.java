@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -23,6 +24,10 @@ public interface PackRepository extends JpaRepository<Pack, Long> {
     @Override
     @EntityGraph(attributePaths = { "site" }) // Charge les relations nécessaires
     Optional<Pack> findById(Long id);
+
+    @Modifying
+    @Query("UPDATE Pack p SET p.isActive = :active WHERE p.id = :id")
+    int updateActiveStatus(@Param("id") Long id, @Param("active") boolean active);
 
     @Query("SELECT p.id as id, p.name as name, p.description as description, p.packType as packType, " +
            "p.price as price, p.originalPrice as originalPrice, " +

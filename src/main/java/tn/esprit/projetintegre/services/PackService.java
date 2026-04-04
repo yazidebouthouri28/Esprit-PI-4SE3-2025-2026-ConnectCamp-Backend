@@ -229,12 +229,12 @@ public class PackService {
         return toResponse(pack);
     }
 
-    public PackDTO.Response setActiveStatus(Long id, boolean active) {
-        Pack pack = packRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pack non trouvé avec l'ID: " + id));
-        pack.setIsActive(active);
-        pack = packRepository.save(pack);
-        return toResponse(pack);
+    @Transactional
+    public void setActiveStatus(Long id, boolean active) {
+        if (!packRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Pack non trouvé avec l'ID: " + id);
+        }
+        packRepository.updateActiveStatus(id, active);
     }
 
     @Transactional

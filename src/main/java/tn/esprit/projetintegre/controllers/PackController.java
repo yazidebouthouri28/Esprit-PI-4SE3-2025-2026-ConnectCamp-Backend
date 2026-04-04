@@ -145,12 +145,12 @@ public class PackController {
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Activer ou désactiver un pack")
-    public ResponseEntity<ApiResponse<PackDTO.Response>> setStatus(
+    public ResponseEntity<ApiResponse<Void>> setStatus(
             @PathVariable Long id,
             @RequestParam boolean active) {
-        PackDTO.Response response = packService.setActiveStatus(id, active);
+        packService.setActiveStatus(id, active);
         String msg = active ? "Pack activé avec succès" : "Pack désactivé avec succès";
-        return ResponseEntity.ok(ApiResponse.success(msg, response));
+        return ResponseEntity.ok(ApiResponse.success(msg, null));
     }
 
     @DeleteMapping("/{id}")
