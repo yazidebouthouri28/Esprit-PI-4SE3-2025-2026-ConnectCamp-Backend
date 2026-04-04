@@ -48,7 +48,7 @@ public class CampingService {
     @JoinColumn(name = "site_id")
     private Site site;
 
-    @ElementCollection
+    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
     @CollectionTable(name = "service_images", joinColumns = @JoinColumn(name = "service_id"))
     @Column(name = "image_url", columnDefinition = "LONGTEXT")
     @Builder.Default

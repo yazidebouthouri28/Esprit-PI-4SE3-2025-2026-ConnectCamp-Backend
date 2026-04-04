@@ -68,22 +68,22 @@ public class Pack {
     @Column(columnDefinition = "LONGTEXT")
     private String image;
 
-    @ElementCollection
+    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
     @CollectionTable(name = "pack_images", joinColumns = @JoinColumn(name = "pack_id"))
     @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private List<String> images = new ArrayList<>();
 
-    @ElementCollection
+    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
     @CollectionTable(name = "pack_features", joinColumns = @JoinColumn(name = "pack_id"))
     @Column(name = "feature", length = 255)
     private List<String> features = new ArrayList<>();
 
-    @ElementCollection
+    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
     @CollectionTable(name = "pack_inclusions", joinColumns = @JoinColumn(name = "pack_id"))
     @Column(name = "inclusion", length = 255)
     private List<String> inclusions = new ArrayList<>();
 
-    @ElementCollection
+    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
     @CollectionTable(name = "pack_exclusions", joinColumns = @JoinColumn(name = "pack_id"))
     @Column(name = "exclusion", length = 255)
     private List<String> exclusions = new ArrayList<>();

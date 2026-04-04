@@ -3,6 +3,7 @@ package tn.esprit.projetintegre.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,7 @@ public class CampingServiceController {
     private final DtoMapper dtoMapper;
 
     @GetMapping
+    @Transactional
     @Operation(summary = "Get active camping services paginated")
     public ResponseEntity<ApiResponse<PageResponse<CampingServiceResponse>>> getAllServices(Pageable pageable) {
         Page<CampingService> page = campingServiceService.getActiveServices(pageable);
