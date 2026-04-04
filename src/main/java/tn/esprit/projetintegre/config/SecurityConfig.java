@@ -71,7 +71,8 @@ public class SecurityConfig {
                                 "/api/general-reviews/**",
                                 "/api/event-services/**",
                                 "/api/camping-services/**",
-                                "/api/candidatures/**"
+                                "/api/candidatures/**",
+                                "/api/packs/**"
                         ).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST,
                                 "/api/reservations/event",
