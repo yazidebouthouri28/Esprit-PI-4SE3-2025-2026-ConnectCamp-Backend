@@ -29,6 +29,30 @@ public interface PackRepository extends JpaRepository<Pack, Long> {
     @Query("UPDATE Pack p SET p.isActive = :active WHERE p.id = :id")
     int updateActiveStatus(@Param("id") Long id, @Param("active") boolean active);
 
+    @Modifying
+    @Query(value = "DELETE FROM pack_services WHERE pack_id = :id", nativeQuery = true)
+    void deletePackServices(@Param("id") Long id);
+
+    @Modifying
+    @Query(value = "DELETE FROM pack_images WHERE pack_id = :id", nativeQuery = true)
+    void deletePackImages(@Param("id") Long id);
+
+    @Modifying
+    @Query(value = "DELETE FROM pack_features WHERE pack_id = :id", nativeQuery = true)
+    void deletePackFeatures(@Param("id") Long id);
+
+    @Modifying
+    @Query(value = "DELETE FROM pack_inclusions WHERE pack_id = :id", nativeQuery = true)
+    void deletePackInclusions(@Param("id") Long id);
+
+    @Modifying
+    @Query(value = "DELETE FROM pack_exclusions WHERE pack_id = :id", nativeQuery = true)
+    void deletePackExclusions(@Param("id") Long id);
+
+    @Modifying
+    @Query(value = "DELETE FROM pack WHERE id = :id", nativeQuery = true)
+    void deletePackById(@Param("id") Long id);
+
     @Query("SELECT p.id as id, p.name as name, p.description as description, p.packType as packType, " +
            "p.price as price, p.originalPrice as originalPrice, " +
            "p.durationDays as durationDays, p.maxPersons as maxPersons, p.isActive as isActive, " +

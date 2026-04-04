@@ -239,16 +239,20 @@ public class PackService {
 
     @Transactional
     public void deletePack(Long id) {
-        // Only ADMIN can delete packs
         if (!SecurityUtil.hasRole(Role.ADMIN)) {
             throw new AccessDeniedException("Only ADMIN can delete packs");
         }
-        Pack pack = packRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pack non trouvé avec l'ID: " + id));
-        // clear ManyToMany join table entries (pack_services) within same session
-        pack.getServices().clear();
-        packRepository.saveAndFlush(pack);
-        packRepository.delete(pack);
+        if (!packRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Pack non trouvé avec l'ID: " + id);
+        }
+        // Delete all related tables via native SQL — never load the entity
+        // (old packs may have large LONGTEXT images that cause connection failures)
+        packRepository.deletePackServices(id);
+        packRepository.deletePackImages(id);
+        packRepository.deletePackFeatures(id);
+        packRepository.deletePackInclusions(id);
+        packRepository.deletePackExclusions(id);
+        packRepository.deletePackById(id);
     }
 
     private PackDTO.Response toResponse(tn.esprit.projetintegre.repositories.projections.PackProjection projection) {
