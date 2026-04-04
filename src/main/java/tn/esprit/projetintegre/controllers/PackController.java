@@ -50,11 +50,25 @@ public class PackController {
     public ResponseEntity<ApiResponse<PageResponse<PackDTO.Response>>> getAllActive(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         Pageable pageable = PageRequest.of(page, size,
                 sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending());
         var result = packService.getAllActive(pageable);
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(result)));
+    }
+
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Obtenir tous les packs (y compris inactifs) pour l'admin")
+    public ResponseEntity<ApiResponse<PageResponse<PackDTO.Response>>> getAllAdmin(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Pageable pageable = PageRequest.of(page, size,
+                sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending());
+        var result = packService.getAllAdmin(pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(result)));
     }
 

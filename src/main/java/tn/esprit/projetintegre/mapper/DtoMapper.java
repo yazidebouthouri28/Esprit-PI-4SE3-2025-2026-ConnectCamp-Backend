@@ -1,10 +1,8 @@
 package tn.esprit.projetintegre.mapper;
 
-import org.hibernate.Hibernate;
 import org.springframework.stereotype.Component;
 import tn.esprit.projetintegre.dto.response.*;
 import tn.esprit.projetintegre.entities.*;
-import tn.esprit.projetintegre.enums.SponsorTier;
 
 import java.util.Collections;
 import java.util.List;
@@ -358,16 +356,18 @@ public class DtoMapper {
                 .price(entity.getPrice())
                 .status(entity.getStatus())
                 .images(entity.getImages())
-                .thumbnail(entity.getThumbnail())
                 .siteId(entity.getSite() != null ? entity.getSite().getId() : null)
                 .siteName(entity.getSite() != null ? entity.getSite().getName() : null)
                 .organizerId(entity.getOrganizer() != null ? entity.getOrganizer().getId() : null)
-                .organizerName(entity.getOrganizer() != null ? entity.getOrganizer().getCompanyName() : null)
+                .organizerName(entity.getOrganizer() != null && entity.getOrganizer().getUser() != null ? entity.getOrganizer().getUser().getName() : null)
+                .organizerUserId(entity.getOrganizer() != null && entity.getOrganizer().getUser() != null ? entity.getOrganizer().getUser().getId() : null)
                 .isFree(entity.getIsFree())
                 .viewCount(entity.getViewCount())
-                .gamifications(toGamificationResponseList(entity.getGamifications()))
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .requestedServices(entity.getRequestedServices() != null 
+                        ? entity.getRequestedServices().stream().map(this::toEventServiceEntityResponse).collect(Collectors.toList())
+                        : Collections.emptyList())
                 .build();
     }
 
@@ -377,23 +377,17 @@ public class DtoMapper {
         return entities.stream().map(this::toEventResponse).collect(Collectors.toList());
     }
 
+    // EventComment Mapping
     public EventCommentResponse toEventCommentResponse(EventComment entity) {
         if (entity == null)
             return null;
-        String userName = null;
-        if (entity.getUser() != null) {
-            userName = entity.getUser().getName() != null && !entity.getUser().getName().isBlank()
-                    ? entity.getUser().getName()
-                    : entity.getUser().getUsername();
-        }
-
         return EventCommentResponse.builder()
                 .id(entity.getId())
                 .content(entity.getContent())
                 .eventId(entity.getEvent() != null ? entity.getEvent().getId() : null)
                 .eventTitle(entity.getEvent() != null ? entity.getEvent().getTitle() : null)
                 .userId(entity.getUser() != null ? entity.getUser().getId() : null)
-                .userName(userName)
+                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -403,51 +397,6 @@ public class DtoMapper {
         if (entities == null)
             return Collections.emptyList();
         return entities.stream().map(this::toEventCommentResponse).collect(Collectors.toList());
-    }
-
-    public InventoryResponse toInventoryResponse(Inventory entity) {
-        if (entity == null)
-            return null;
-
-        Integer quantity = entity.getQuantity() != null ? entity.getQuantity() : 0;
-        Integer reservedQuantity = entity.getReservedQuantity() != null ? entity.getReservedQuantity() : 0;
-        Integer availableQuantity = entity.getAvailableQuantity() != null
-                ? entity.getAvailableQuantity()
-                : quantity - reservedQuantity;
-        boolean isLowStock = entity.getLowStockThreshold() != null
-                && availableQuantity <= entity.getLowStockThreshold();
-
-        return InventoryResponse.builder()
-                .id(entity.getId())
-                .sku(entity.getSku())
-                .quantity(quantity)
-                .reservedQuantity(reservedQuantity)
-                .availableQuantity(availableQuantity)
-                .lowStockThreshold(entity.getLowStockThreshold())
-                .safetyStock(entity.getSafetyStock())
-                .reorderQuantity(entity.getReorderQuantity())
-                .location(entity.getLocation())
-                .aisle(entity.getAisle())
-                .shelf(entity.getShelf())
-                .bin(entity.getBin())
-                .lastStockCheck(entity.getLastStockCheck())
-                .lastRestocked(entity.getLastRestocked())
-                .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
-                .productName(entity.getProduct() != null ? entity.getProduct().getName() : null)
-                .variantId(entity.getVariant() != null ? entity.getVariant().getId() : null)
-                .variantName(entity.getVariant() != null ? entity.getVariant().getName() : null)
-                .warehouseId(entity.getWarehouse() != null ? entity.getWarehouse().getId() : null)
-                .warehouseName(entity.getWarehouse() != null ? entity.getWarehouse().getName() : null)
-                .isLowStock(isLowStock)
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
-    }
-
-    public List<InventoryResponse> toInventoryResponseList(List<Inventory> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toInventoryResponse).collect(Collectors.toList());
     }
 
     // Site Mapping
@@ -471,37 +420,13 @@ public class DtoMapper {
                 .contactPhone(entity.getContactPhone())
                 .contactEmail(entity.getContactEmail())
                 .isActive(entity.getIsActive())
-                .checkInTime(entity.getCheckInTime())
-                .checkOutTime(entity.getCheckOutTime())
-                .houseRules(entity.getHouseRules())
-                .rating(entity.getRating())
+                .rating(entity.getAverageRating())
                 .reviewCount(entity.getReviewCount())
-                .ownerId(entity.getOwner() != null ? entity.getOwner().getId() : null)
-                .ownerName(entity.getOwner() != null ? entity.getOwner().getName() : null)
+                .ownerId(null)
+                .ownerName(null)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
-    }
-
-    // Gamification Mapping
-    public GamificationResponse toGamificationResponse(Gamification entity) {
-        if (entity == null)
-            return null;
-        return GamificationResponse.builder()
-                .id(entity.getId())
-                .name(entity.getName())
-                .description(entity.getDescription())
-                .icon(entity.getIcon())
-                .pointsValue(entity.getPointsValue())
-                .organizerId(entity.getOrganizer() != null ? entity.getOrganizer().getId() : null)
-                .organizerName(entity.getOrganizer() != null && Hibernate.isInitialized(entity.getOrganizer()) ? entity.getOrganizer().getCompanyName() : null)
-                .build();
-    }
-
-    public List<GamificationResponse> toGamificationResponseList(java.util.Collection<Gamification> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toGamificationResponse).collect(Collectors.toList());
     }
 
     // Achievement Mapping
@@ -604,6 +529,13 @@ public class DtoMapper {
                 .userName(entity.getUser() != null ? entity.getUser().getName() : null)
                 .siteId(entity.getSite() != null ? entity.getSite().getId() : null)
                 .siteName(entity.getSite() != null ? entity.getSite().getName() : null)
+                .campsiteId(entity.getCampsite() != null ? entity.getCampsite().getId() : null)
+                .campsiteName(entity.getCampsite() != null ? entity.getCampsite().getName() : null)
+                .packId(entity.getPack() != null ? entity.getPack().getId() : null)
+                .packName(entity.getPack() != null ? entity.getPack().getName() : null)
+                .serviceNames(entity.getServices() != null
+                        ? entity.getServices().stream().map(tn.esprit.projetintegre.entities.CampingService::getName).toList()
+                        : Collections.emptyList())
                 // Conversion LocalDateTime vers LocalDate pour le DTO
                 .checkInDate(entity.getCheckInDate() != null ? entity.getCheckInDate().toLocalDate() : null)
                 .checkOutDate(entity.getCheckOutDate() != null ? entity.getCheckOutDate().toLocalDate() : null)
@@ -646,20 +578,12 @@ public class DtoMapper {
                 .website(entity.getWebsite())
                 .email(entity.getEmail())
                 .phone(entity.getPhone())
-                .address(entity.getAddress())
-                .city(entity.getCity())
-                .country(entity.getCountry())
                 .contactPerson(entity.getContactPerson())
-                .contactPosition(entity.getContactPosition())
-                .notes(entity.getNotes())
-                .tier(entity.getTier() != null ? entity.getTier() : SponsorTier.BRONZE)
                 .isActive(entity.getIsActive())
                 // Note: address, city, country, contactPosition, notes ne sont pas dans
                 // l'entité Sponsor fournie
                 // sponsorshipCount peut être calculé si la relation existe :
-                .sponsorshipCount(entity.getSponsorships() != null && Hibernate.isInitialized(entity.getSponsorships())
-                        ? entity.getSponsorships().size()
-                        : 0)
+                .sponsorshipCount(entity.getSponsorships() != null ? entity.getSponsorships().size() : 0)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -727,8 +651,8 @@ public class DtoMapper {
                 .userName(entity.getUser() != null ? entity.getUser().getName() : null)
                 .achievementId(entity.getAchievement() != null ? entity.getAchievement().getId() : null)
                 .achievementName(entity.getAchievement() != null ? entity.getAchievement().getName() : null)
+                // Ajout des champs manquants du DTO
                 .achievementBadge(entity.getAchievement() != null ? entity.getAchievement().getBadge() : null)
-                .achievementIcon(entity.getAchievement() != null ? entity.getAchievement().getIcon() : null)
                 .achievementDescription(
                         entity.getAchievement() != null ? entity.getAchievement().getDescription() : null)
                 .rewardPoints(entity.getAchievement() != null ? entity.getAchievement().getRewardPoints() : null)
@@ -771,6 +695,8 @@ public class DtoMapper {
                 .providerName(entity.getProvider() != null ? entity.getProvider().getName() : null)
                 .siteId(entity.getSite() != null ? entity.getSite().getId() : null)
                 .siteName(entity.getSite() != null ? entity.getSite().getName() : null)
+                .isCamperOnly(entity.getIsCamperOnly())
+                .isOrganizerService(entity.getIsOrganizerService())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -780,6 +706,38 @@ public class DtoMapper {
         if (entities == null)
             return Collections.emptyList();
         return entities.stream().map(this::toCampingServiceResponse).collect(Collectors.toList());
+    }
+
+    // Inventory Mapping
+    public InventoryResponse toInventoryResponse(Inventory entity) {
+        if (entity == null)
+            return null;
+        return InventoryResponse.builder()
+                .id(entity.getId())
+                .sku(entity.getSku())
+                .quantity(entity.getQuantity())
+                .reservedQuantity(entity.getReservedQuantity())
+                .availableQuantity(entity.getAvailableQuantity())
+                .lowStockThreshold(entity.getLowStockThreshold())
+                .safetyStock(entity.getSafetyStock())
+                .reorderQuantity(entity.getReorderQuantity())
+                .location(entity.getLocation())
+                .aisle(entity.getAisle())
+                .shelf(entity.getShelf())
+                .bin(entity.getBin())
+                .lastStockCheck(entity.getLastStockCheck())
+                .lastRestocked(entity.getLastRestocked())
+                .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
+                .productName(entity.getProduct() != null ? entity.getProduct().getName() : null)
+                .variantId(entity.getVariant() != null ? entity.getVariant().getId() : null)
+                .variantName(entity.getVariant() != null ? entity.getVariant().getName() : null)
+                .warehouseId(entity.getWarehouse() != null ? entity.getWarehouse().getId() : null)
+                .warehouseName(entity.getWarehouse() != null ? entity.getWarehouse().getName() : null)
+                .isLowStock(entity.getQuantity() != null && entity.getLowStockThreshold() != null
+                        && entity.getQuantity() <= entity.getLowStockThreshold())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
     }
 
     // Alert Mapping
@@ -825,6 +783,31 @@ public class DtoMapper {
                 .balance(entity.getBalance())
                 .currency(entity.getCurrency())
                 .isActive(entity.getIsActive())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    public EventServiceEntityResponse toEventServiceEntityResponse(EventServiceEntity entity) {
+        if (entity == null) return null;
+        return EventServiceEntityResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .serviceType(entity.getServiceType())
+                .price(entity.getPrice())
+                .included(entity.getIncluded())
+                .optional(entity.getOptional())
+                .quantity(entity.getQuantity())
+                .quantiteRequise(entity.getQuantiteRequise())
+                .quantiteAcceptee(entity.getQuantiteAcceptee())
+                .notes(entity.getNotes())
+                .eventId(entity.getEvent() != null ? entity.getEvent().getId() : null)
+                .eventTitle(entity.getEvent() != null ? entity.getEvent().getTitle() : null)
+                .serviceId(entity.getService() != null ? entity.getService().getId() : null)
+                .serviceName(entity.getService() != null ? entity.getService().getName() : null)
+                .providerId(entity.getProvider() != null ? entity.getProvider().getId() : null)
+                .providerName(entity.getProvider() != null ? entity.getProvider().getName() : null)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

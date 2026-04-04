@@ -16,24 +16,24 @@ import java.util.Optional;
 public interface InterventionSecoursRepository extends JpaRepository<InterventionSecours, Long> {
 
     @Override
-    @EntityGraph(attributePaths = {"alerte", "responsable", "site"}) // Charge les relations nécessaires
+    @EntityGraph(attributePaths = {"alerte", "responsable"})
     Optional<InterventionSecours> findById(Long id);
 
-    @EntityGraph(attributePaths = {"alerte", "responsable", "site"})
+    @EntityGraph(attributePaths = {"alerte", "responsable"})
     Optional<InterventionSecours> findByNumeroIntervention(String numero);
 
-    @EntityGraph(attributePaths = {"alerte", "responsable", "site"})
+    @EntityGraph(attributePaths = {"alerte", "responsable"})
     List<InterventionSecours> findByStatut(StatutIntervention statut);
 
-    @EntityGraph(attributePaths = {"alerte", "responsable", "site"})
+    @EntityGraph(attributePaths = {"alerte", "responsable"})
     Page<InterventionSecours> findByStatut(StatutIntervention statut, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"alerte", "responsable", "site"})
+    @EntityGraph(attributePaths = {"alerte", "responsable"})
     List<InterventionSecours> findByTypeUrgence(TypeUrgence type);
 
-    @EntityGraph(attributePaths = {"alerte", "responsable", "site"})
+    @EntityGraph(attributePaths = {"alerte", "responsable"})
     List<InterventionSecours> findByAlerteId(Long alerteId);
 
-    @EntityGraph(attributePaths = {"alerte", "responsable", "site"})
+    @EntityGraph(attributePaths = {"alerte", "responsable"})
     List<InterventionSecours> findByResponsableId(Long userId);
 }

@@ -47,6 +47,7 @@ public class EmergencyAlertDTO {
         private String emergencyContacts;
 
         private Integer affectedPersonsCount;
+        @Builder.Default
         private Boolean evacuationRequired = false;
 
         private Long siteId;

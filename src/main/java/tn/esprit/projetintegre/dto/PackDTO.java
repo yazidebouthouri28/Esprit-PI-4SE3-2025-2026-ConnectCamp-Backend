@@ -39,6 +39,7 @@ public class PackDTO {
         @Min(value = 1, message = "Le nombre de personnes doit être au moins 1")
         private Integer maxPersons;
 
+        private String imageUrl;
         private String image;
         private List<String> images;
         private List<String> features;
@@ -71,6 +72,7 @@ public class PackDTO {
         private BigDecimal originalPrice;
         private Integer durationDays;
         private Integer maxPersons;
+        private String imageUrl;
         private String image;
         private List<String> images;
         private List<String> features;
@@ -82,6 +84,7 @@ public class PackDTO {
         private Integer availableQuantity;
         private LocalDateTime validFrom;
         private LocalDateTime validUntil;
+        private List<Long> serviceIds;
     }
 
     @Data
@@ -95,9 +98,11 @@ public class PackDTO {
         private PackType packType;
         private BigDecimal price;
         private BigDecimal originalPrice;
-        private BigDecimal discountPercentage;
+        private Double discountPercentage;
         private Integer durationDays;
         private Integer maxPersons;
+        private String imageUrl;
+        private Integer serviceCount;
         private String image;
         private List<String> images;
         private List<String> features;
@@ -115,5 +120,7 @@ public class PackDTO {
         private Long siteId;
         private String siteName;
         private LocalDateTime createdAt;
+        private List<Long> serviceIds;
+        private List<String> serviceNames;
     }
 }

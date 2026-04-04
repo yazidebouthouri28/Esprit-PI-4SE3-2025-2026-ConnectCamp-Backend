@@ -9,8 +9,13 @@ import tn.esprit.projetintegre.entities.CampingService;
 import tn.esprit.projetintegre.entities.Site;
 import tn.esprit.projetintegre.entities.User;
 import tn.esprit.projetintegre.enums.ServiceType;
+import tn.esprit.projetintegre.exception.CannotDeleteServiceException;
+import tn.esprit.projetintegre.exception.AccessDeniedException;
+import tn.esprit.projetintegre.security.SecurityUtil;
+import tn.esprit.projetintegre.enums.Role;
 import tn.esprit.projetintegre.exception.ResourceNotFoundException;
 import tn.esprit.projetintegre.repositories.CampingServiceRepository;
+import tn.esprit.projetintegre.repositories.EventServiceEntityRepository;
 import tn.esprit.projetintegre.repositories.SiteRepository;
 import tn.esprit.projetintegre.repositories.UserRepository;
 
@@ -24,6 +29,7 @@ public class CampingServiceService {
     private final CampingServiceRepository campingServiceRepository;
     private final SiteRepository siteRepository;
     private final UserRepository userRepository;
+    private final EventServiceEntityRepository eventServiceEntityRepository;
 
     public Page<CampingService> getAllServices(Pageable pageable) {
         return campingServiceRepository.findAll(pageable);
@@ -36,6 +42,10 @@ public class CampingServiceService {
 
     public Page<CampingService> getActiveServices(Pageable pageable) {
         return campingServiceRepository.findByIsActiveTrue(pageable);
+    }
+
+    public Page<CampingService> getOrganizerServices(Pageable pageable) {
+        return campingServiceRepository.findByIsActiveTrueAndIsOrganizerServiceTrue(pageable);
     }
 
     public List<CampingService> getServicesByType(ServiceType type) {
@@ -53,6 +63,9 @@ public class CampingServiceService {
     public CampingService createService(CampingService service, Long providerId, Long siteId) {
         User provider = userRepository.findById(providerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Provider not found with id: " + providerId));
+        if (!SecurityUtil.hasRole(Role.ADMIN)) {
+            throw new AccessDeniedException("Only ADMIN can create services");
+        }
         service.setProvider(provider);
 
         if (siteId != null) {
@@ -62,11 +75,17 @@ public class CampingServiceService {
         }
 
         service.setIsActive(true);
-        service.setIsAvailable(true);
+        service.setIsAvailable(service.getIsAvailable() != null ? service.getIsAvailable() : true);
+        service.setIsCamperOnly(service.getIsCamperOnly() != null ? service.getIsCamperOnly() : false);
+        service.setIsOrganizerService(
+                service.getIsOrganizerService() != null ? service.getIsOrganizerService() : false);
         return campingServiceRepository.save(service);
     }
 
     public CampingService updateService(Long id, CampingService serviceDetails) {
+        if (!SecurityUtil.hasRole(Role.ADMIN)) {
+            throw new AccessDeniedException("Only ADMIN can update services");
+        }
         CampingService service = getServiceById(id);
         service.setName(serviceDetails.getName());
         service.setDescription(serviceDetails.getDescription());
@@ -76,12 +95,25 @@ public class CampingServiceService {
         service.setImages(serviceDetails.getImages());
         service.setMaxCapacity(serviceDetails.getMaxCapacity());
         service.setDuration(serviceDetails.getDuration());
-        service.setIsAvailable(serviceDetails.getIsAvailable());
+        if (serviceDetails.getIsAvailable() != null) {
+            service.setIsAvailable(serviceDetails.getIsAvailable());
+        }
+        if (serviceDetails.getIsActive() != null) {
+            service.setIsActive(serviceDetails.getIsActive());
+        }
         return campingServiceRepository.save(service);
     }
 
     public void deleteService(Long id) {
+        if (!SecurityUtil.hasRole(Role.ADMIN)) {
+            throw new AccessDeniedException("Only ADMIN can delete services");
+        }
         CampingService service = getServiceById(id);
+        if (eventServiceEntityRepository.existsByServiceId(id)) {
+            throw new CannotDeleteServiceException(
+                    "Cannot delete service because it is assigned to one or more events.");
+        }
+
         service.setIsActive(false);
         campingServiceRepository.save(service);
     }

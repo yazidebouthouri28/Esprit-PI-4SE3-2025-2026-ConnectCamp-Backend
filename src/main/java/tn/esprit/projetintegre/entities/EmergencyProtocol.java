@@ -44,9 +44,7 @@ public class EmergencyProtocol {
     @Column(name = "emergency_type", nullable = false)
     private EmergencyType emergencyType;
 
-    @Size(max = 5000, message = "Les étapes ne peuvent pas dépasser 5000 caractères")
-    @Column(length = 5000)
-    private String steps;
+
 
     @ElementCollection
     @CollectionTable(name = "protocol_steps", joinColumns = @JoinColumn(name = "protocol_id"))
@@ -77,7 +75,9 @@ public class EmergencyProtocol {
     @Max(value = 10, message = "Le niveau de priorité ne peut pas dépasser 10")
     private Integer priorityLevel;
 
+    @Builder.Default
     private Boolean isActive = true;
+    @Builder.Default
     private Boolean requiresTraining = false;
 
     private LocalDateTime lastReviewedAt;

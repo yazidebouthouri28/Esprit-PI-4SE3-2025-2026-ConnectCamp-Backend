@@ -28,13 +28,26 @@ public class EmergencyAlertController {
     private final EmergencyAlertService alertService;
 
     @PostMapping
-    @Operation(summary = "Créer une alerte d'urgence")
+    @PreAuthorize("hasRole('CAMPER') or hasRole('PARTICIPANT') or hasRole('USER')")
+    @Operation(summary = "Créer une alerte d'urgence (Réservé aux CAMPER)")
     public ResponseEntity<ApiResponse<EmergencyAlertDTO.Response>> createAlert(
             @RequestParam Long reporterId,
             @Valid @RequestBody EmergencyAlertDTO.CreateRequest request) {
         EmergencyAlertDTO.Response response = alertService.createAlert(reporterId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Alerte d'urgence créée avec succès", response));
+    }
+
+    @GetMapping("/my-alerts")
+    @PreAuthorize("hasRole('CAMPER') or hasRole('PARTICIPANT') or hasRole('USER')")
+    @Operation(summary = "Obtenir mes propres alertes (Camper)")
+    public ResponseEntity<ApiResponse<PageResponse<EmergencyAlertDTO.Response>>> getMyAlerts(
+            @RequestParam Long reporterId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("reportedAt").descending());
+        var result = alertService.getByReporterId(reporterId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(result)));
     }
 
     @GetMapping("/{id}")
@@ -48,6 +61,14 @@ public class EmergencyAlertController {
     @Operation(summary = "Obtenir les alertes actives")
     public ResponseEntity<ApiResponse<List<EmergencyAlertDTO.Response>>> getActiveAlerts() {
         List<EmergencyAlertDTO.Response> response = alertService.getActiveAlerts();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Obtenir toutes les alertes (ADMIN only)")
+    public ResponseEntity<ApiResponse<List<EmergencyAlertDTO.Response>>> getAllAlerts() {
+        List<EmergencyAlertDTO.Response> response = alertService.getAllAlerts();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

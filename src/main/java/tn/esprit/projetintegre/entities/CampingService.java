@@ -1,7 +1,7 @@
 package tn.esprit.projetintegre.entities;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import tn.esprit.projetintegre.enums.ServiceType;
 
@@ -30,8 +30,11 @@ public class CampingService {
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @NotNull(message = "Service type is required")
     private ServiceType type;
 
+    @NotNull(message = "Price is required")
+    @DecimalMin(value = "0.01", message = "Price must be greater than zero")
     @Column(precision = 15, scale = 2)
     private BigDecimal price;
 
@@ -47,17 +50,26 @@ public class CampingService {
 
     @ElementCollection
     @CollectionTable(name = "service_images", joinColumns = @JoinColumn(name = "service_id"))
-    @Column(name = "image_url")
+    @Column(name = "image_url", columnDefinition = "LONGTEXT")
+    @Builder.Default
     private List<String> images = new ArrayList<>();
 
+    @Builder.Default
     private Boolean isActive = true;
+    @Builder.Default
     private Boolean isAvailable = true;
+    // New flags to differentiate service visibility
+    @Builder.Default
+    private Boolean isCamperOnly = false;
+    @Builder.Default
+    private Boolean isOrganizerService = false;
 
     private Integer maxCapacity;
     private Integer duration; // in minutes
 
     @Column(precision = 3, scale = 2)
     private BigDecimal rating;
+    @Builder.Default
     private Integer reviewCount = 0;
 
     private LocalDateTime createdAt;

@@ -17,30 +17,33 @@ import java.util.Optional;
 @Repository
 public interface EmergencyInterventionRepository extends JpaRepository<EmergencyIntervention, Long> {
 
-    @EntityGraph(attributePaths = {"alert", "site", "dispatchedBy"}) // Charge les relations nécessaires
+    @EntityGraph(attributePaths = {"alert", "site"}) // Charge les relations nécessaires
     Optional<EmergencyIntervention> findById(Long id);
 
-    @EntityGraph(attributePaths = {"alert", "site", "dispatchedBy"})
+    @EntityGraph(attributePaths = {"alert", "site"})
     Optional<EmergencyIntervention> findByInterventionCode(String interventionCode);
 
-    @EntityGraph(attributePaths = {"alert", "site", "dispatchedBy"})
+    @EntityGraph(attributePaths = {"alert", "site"})
     Page<EmergencyIntervention> findByStatus(String status, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"alert", "site", "dispatchedBy"})
+    @EntityGraph(attributePaths = {"alert", "site"})
     Page<EmergencyIntervention> findByAlertId(Long alertId, Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"alert", "site"})
+    List<EmergencyIntervention> findByAlertId(Long alertId);
 
-    @EntityGraph(attributePaths = {"alert", "site", "dispatchedBy"})
+    @EntityGraph(attributePaths = {"alert", "site"})
     Page<EmergencyIntervention> findBySiteId(Long siteId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"alert", "site", "dispatchedBy"})
+    @EntityGraph(attributePaths = {"alert", "site"})
     @Query("SELECT ei FROM EmergencyIntervention ei WHERE ei.status NOT IN ('COMPLETED', 'CANCELLED') ORDER BY ei.dispatchedAt DESC")
     List<EmergencyIntervention> findActiveInterventions();
 
-    @EntityGraph(attributePaths = {"alert", "site", "dispatchedBy"})
+    @EntityGraph(attributePaths = {"alert", "site"})
     @Query("SELECT ei FROM EmergencyIntervention ei WHERE ei.site.id = :siteId AND ei.status NOT IN ('COMPLETED', 'CANCELLED')")
     List<EmergencyIntervention> findActiveInterventionsBySite(@Param("siteId") Long siteId);
 
-    @EntityGraph(attributePaths = {"alert", "site", "dispatchedBy"})
+    @EntityGraph(attributePaths = {"alert", "site"})
     @Query("SELECT ei FROM EmergencyIntervention ei WHERE ei.dispatchedAt >= :startDate AND ei.dispatchedAt <= :endDate")
     Page<EmergencyIntervention> findByDateRange(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
 

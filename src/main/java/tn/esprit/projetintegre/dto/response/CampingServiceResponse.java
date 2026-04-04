@@ -29,6 +29,8 @@ public class CampingServiceResponse {
     private String providerName;
     private Long siteId;
     private String siteName;
+    private Boolean isCamperOnly;
+    private Boolean isOrganizerService;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

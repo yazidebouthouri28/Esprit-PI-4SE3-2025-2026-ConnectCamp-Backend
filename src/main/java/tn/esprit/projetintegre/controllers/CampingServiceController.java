@@ -29,9 +29,9 @@ public class CampingServiceController {
     private final DtoMapper dtoMapper;
 
     @GetMapping
-    @Operation(summary = "Get all camping services paginated")
+    @Operation(summary = "Get active camping services paginated")
     public ResponseEntity<ApiResponse<PageResponse<CampingServiceResponse>>> getAllServices(Pageable pageable) {
-        Page<CampingService> page = campingServiceService.getAllServices(pageable);
+        Page<CampingService> page = campingServiceService.getActiveServices(pageable);
         Page<CampingServiceResponse> response = page.map(dtoMapper::toCampingServiceResponse);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
     }
@@ -47,6 +47,14 @@ public class CampingServiceController {
     @Operation(summary = "Get active camping services")
     public ResponseEntity<ApiResponse<PageResponse<CampingServiceResponse>>> getActiveServices(Pageable pageable) {
         Page<CampingService> page = campingServiceService.getActiveServices(pageable);
+        Page<CampingServiceResponse> response = page.map(dtoMapper::toCampingServiceResponse);
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
+    }
+
+    @GetMapping("/organizer")
+    @Operation(summary = "Get services specifically for organizers (B2B)")
+    public ResponseEntity<ApiResponse<PageResponse<CampingServiceResponse>>> getOrganizerServices(Pageable pageable) {
+        Page<CampingService> page = campingServiceService.getOrganizerServices(pageable);
         Page<CampingServiceResponse> response = page.map(dtoMapper::toCampingServiceResponse);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
     }
@@ -84,7 +92,8 @@ public class CampingServiceController {
             @RequestParam(required = false) Long siteId) {
         CampingService service = toEntity(request);
         CampingService created = campingServiceService.createService(service, providerId, siteId);
-        return ResponseEntity.ok(ApiResponse.success("Camping service created successfully", dtoMapper.toCampingServiceResponse(created)));
+        return ResponseEntity.ok(ApiResponse.success("Camping service created successfully",
+                dtoMapper.toCampingServiceResponse(created)));
     }
 
     @PutMapping("/{id}")
@@ -94,7 +103,8 @@ public class CampingServiceController {
             @Valid @RequestBody CampingServiceRequest request) {
         CampingService serviceDetails = toEntity(request);
         CampingService updated = campingServiceService.updateService(id, serviceDetails);
-        return ResponseEntity.ok(ApiResponse.success("Camping service updated successfully", dtoMapper.toCampingServiceResponse(updated)));
+        return ResponseEntity.ok(ApiResponse.success("Camping service updated successfully",
+                dtoMapper.toCampingServiceResponse(updated)));
     }
 
     @DeleteMapping("/{id}")
@@ -114,6 +124,8 @@ public class CampingServiceController {
                 .images(request.getImages())
                 .isActive(request.getIsActive())
                 .isAvailable(request.getIsAvailable())
+                .isCamperOnly(request.getIsCamperOnly())
+                .isOrganizerService(request.getIsOrganizerService())
                 .maxCapacity(request.getMaxCapacity())
                 .duration(request.getDuration())
                 .build();

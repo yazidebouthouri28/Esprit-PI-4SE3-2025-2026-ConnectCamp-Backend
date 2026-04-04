@@ -15,18 +15,21 @@ import java.util.Optional;
 public interface CampingServiceRepository extends JpaRepository<CampingService, Long> {
 
     @Override
-    @EntityGraph(attributePaths = {"site", "provider"})
+    @EntityGraph(attributePaths = { "site", "provider" })
     Optional<CampingService> findById(Long id);
 
-    @EntityGraph(attributePaths = {"site", "provider"})
+    @EntityGraph(attributePaths = { "site", "provider" })
     Page<CampingService> findByIsActiveTrue(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"site", "provider"})
+    @EntityGraph(attributePaths = { "site", "provider" })
     List<CampingService> findByType(ServiceType type);
 
-    @EntityGraph(attributePaths = {"site", "provider"})
+    @EntityGraph(attributePaths = { "site", "provider" })
     Page<CampingService> findBySiteId(Long siteId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"site", "provider"})
+    @EntityGraph(attributePaths = { "site", "provider" })
     Page<CampingService> findByProviderId(Long providerId, Pageable pageable);
+
+    @EntityGraph(attributePaths = { "site", "provider" })
+    Page<CampingService> findByIsActiveTrueAndIsOrganizerServiceTrue(Pageable pageable);
 }

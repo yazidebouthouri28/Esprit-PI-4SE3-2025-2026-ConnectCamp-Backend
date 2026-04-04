@@ -12,9 +12,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "packs", indexes = {
-    @Index(name = "idx_pack_site", columnList = "site_id"),
-    @Index(name = "idx_pack_type", columnList = "pack_type"),
-    @Index(name = "idx_pack_active", columnList = "is_active")
+        @Index(name = "idx_pack_site", columnList = "site_id"),
+        @Index(name = "idx_pack_type", columnList = "pack_type"),
+        @Index(name = "idx_pack_active", columnList = "is_active")
 })
 @Getter
 @Setter
@@ -51,6 +51,9 @@ public class Pack {
     @Column(precision = 15, scale = 2)
     private BigDecimal originalPrice;
 
+    @Transient
+    private Double discountPercentage;
+
     @Min(value = 1, message = "La durée doit être au moins 1 jour")
     @Max(value = 365, message = "La durée ne peut pas dépasser 365 jours")
     private Integer durationDays;
@@ -59,12 +62,15 @@ public class Pack {
     @Max(value = 100, message = "Le nombre de personnes ne peut pas dépasser 100")
     private Integer maxPersons;
 
-    @Column(length = 500)
+    @Column(length = 1000)
+    private String imageUrl;
+
+    @Column(columnDefinition = "LONGTEXT")
     private String image;
 
     @ElementCollection
     @CollectionTable(name = "pack_images", joinColumns = @JoinColumn(name = "pack_id"))
-    @Column(name = "image_url", length = 500)
+    @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private List<String> images = new ArrayList<>();
 
     @ElementCollection
@@ -105,11 +111,7 @@ public class Pack {
     private Site site;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "pack_services",
-        joinColumns = @JoinColumn(name = "pack_id"),
-        inverseJoinColumns = @JoinColumn(name = "service_id")
-    )
+    @JoinTable(name = "pack_services", joinColumns = @JoinColumn(name = "pack_id"), inverseJoinColumns = @JoinColumn(name = "service_id"))
     private List<CampingService> services = new ArrayList<>();
 
     private LocalDateTime createdAt;
@@ -126,11 +128,14 @@ public class Pack {
         updatedAt = LocalDateTime.now();
     }
 
-    public BigDecimal getDiscountPercentage() {
-        if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0 && price != null) {
-            return originalPrice.subtract(price).divide(originalPrice, 2, java.math.RoundingMode.HALF_UP)
-                    .multiply(BigDecimal.valueOf(100));
+    public Double getDiscountPercentage() {
+        if (this.discountPercentage != null) {
+            return this.discountPercentage;
         }
-        return BigDecimal.ZERO;
+        if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0 && price != null) {
+            return originalPrice.subtract(price).divide(originalPrice, 4, java.math.RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100)).doubleValue();
+        }
+        return 0.0;
     }
 }

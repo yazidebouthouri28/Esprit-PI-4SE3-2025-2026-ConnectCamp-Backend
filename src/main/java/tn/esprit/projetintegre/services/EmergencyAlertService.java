@@ -1,8 +1,12 @@
 package tn.esprit.projetintegre.services;
 
 import lombok.RequiredArgsConstructor;
+import tn.esprit.projetintegre.exception.AccessDeniedException;
+import tn.esprit.projetintegre.security.SecurityUtil;
+import tn.esprit.projetintegre.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.projetintegre.dto.EmergencyAlertDTO;
@@ -11,8 +15,6 @@ import tn.esprit.projetintegre.entities.User;
 import tn.esprit.projetintegre.entities.Site;
 import tn.esprit.projetintegre.entities.Event;
 import tn.esprit.projetintegre.enums.AlertStatus;
-import tn.esprit.projetintegre.enums.EmergencyType;
-import tn.esprit.projetintegre.enums.EmergencySeverity;
 import tn.esprit.projetintegre.exception.BusinessException;
 import tn.esprit.projetintegre.exception.ResourceNotFoundException;
 import tn.esprit.projetintegre.repositories.EmergencyAlertRepository;
@@ -34,6 +36,10 @@ public class EmergencyAlertService {
     private final EventRepository eventRepository;
 
     public EmergencyAlertDTO.Response createAlert(Long reporterId, EmergencyAlertDTO.CreateRequest request) {
+        // Allow CAMPER, PARTICIPANT, and USER to initiate SOS
+        if (!SecurityUtil.hasRole(Role.CAMPER) && !SecurityUtil.hasRole(Role.PARTICIPANT) && !SecurityUtil.hasRole(Role.USER)) {
+            throw new AccessDeniedException("Only campers and users can initiate SOS alerts");
+        }
         User reporter = userRepository.findById(reporterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID: " + reporterId));
 
@@ -55,13 +61,15 @@ public class EmergencyAlertService {
 
         if (request.getSiteId() != null) {
             Site site = siteRepository.findById(request.getSiteId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Site non trouvé avec l'ID: " + request.getSiteId()));
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("Site non trouvé avec l'ID: " + request.getSiteId()));
             alert.setSite(site);
         }
 
         if (request.getEventId() != null) {
             Event event = eventRepository.findById(request.getEventId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Événement non trouvé avec l'ID: " + request.getEventId()));
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Événement non trouvé avec l'ID: " + request.getEventId()));
             alert.setEvent(event);
         }
 
@@ -78,11 +86,19 @@ public class EmergencyAlertService {
 
     @Transactional(readOnly = true)
     public List<EmergencyAlertDTO.Response> getActiveAlerts() {
+        // Only ADMIN can view active alerts list
+        if (!SecurityUtil.hasRole(Role.ADMIN)) {
+            throw new AccessDeniedException("Only ADMIN can view active alerts list");
+        }
         return alertRepository.findActiveAlerts().stream().map(this::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     public List<EmergencyAlertDTO.Response> getCriticalAlerts() {
+        // Only ADMIN can view critical alerts list
+        if (!SecurityUtil.hasRole(Role.ADMIN)) {
+            throw new AccessDeniedException("Only ADMIN can view critical alerts list");
+        }
         return alertRepository.findCriticalActiveAlerts().stream().map(this::toResponse).toList();
     }
 
@@ -92,11 +108,29 @@ public class EmergencyAlertService {
     }
 
     @Transactional(readOnly = true)
+    public List<EmergencyAlertDTO.Response> getAllAlerts() {
+        // Only ADMIN can view all alerts
+        if (!SecurityUtil.hasRole(Role.ADMIN)) {
+            throw new AccessDeniedException("Only ADMIN can view all alerts");
+        }
+        return alertRepository.findAll(Sort.by("reportedAt").descending()).stream().map(this::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
     public Page<EmergencyAlertDTO.Response> getByStatus(AlertStatus status, Pageable pageable) {
         return alertRepository.findByStatus(status, pageable).map(this::toResponse);
     }
 
+    @Transactional(readOnly = true)
+    public Page<EmergencyAlertDTO.Response> getByReporterId(Long reporterId, Pageable pageable) {
+        return alertRepository.findByReportedById(reporterId, pageable).map(this::toResponse);
+    }
+
     public EmergencyAlertDTO.Response acknowledgeAlert(Long id, Long userId) {
+        // Only ADMIN can acknowledge alerts
+        if (!SecurityUtil.hasRole(Role.ADMIN)) {
+            throw new AccessDeniedException("Only ADMIN can acknowledge alerts");
+        }
         EmergencyAlert alert = alertRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Alerte non trouvée avec l'ID: " + id));
 
@@ -116,6 +150,10 @@ public class EmergencyAlertService {
     }
 
     public EmergencyAlertDTO.Response resolveAlert(Long id, Long userId, String resolutionNotes) {
+        // Only ADMIN can resolve alerts
+        if (!SecurityUtil.hasRole(Role.ADMIN)) {
+            throw new AccessDeniedException("Only ADMIN can resolve alerts");
+        }
         EmergencyAlert alert = alertRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Alerte non trouvée avec l'ID: " + id));
 
@@ -136,25 +174,43 @@ public class EmergencyAlertService {
     }
 
     public EmergencyAlertDTO.Response updateAlert(Long id, EmergencyAlertDTO.UpdateRequest request) {
+        // Only ADMIN can update alerts
+        if (!SecurityUtil.hasRole(Role.ADMIN)) {
+            throw new AccessDeniedException("Only ADMIN can update alerts");
+        }
         EmergencyAlert alert = alertRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Alerte non trouvée avec l'ID: " + id));
 
-        if (request.getTitle() != null) alert.setTitle(request.getTitle());
-        if (request.getDescription() != null) alert.setDescription(request.getDescription());
-        if (request.getSeverity() != null) alert.setSeverity(request.getSeverity());
-        if (request.getStatus() != null) alert.setStatus(request.getStatus());
-        if (request.getLocation() != null) alert.setLocation(request.getLocation());
-        if (request.getInstructions() != null) alert.setInstructions(request.getInstructions());
-        if (request.getEmergencyContacts() != null) alert.setEmergencyContacts(request.getEmergencyContacts());
-        if (request.getAffectedPersonsCount() != null) alert.setAffectedPersonsCount(request.getAffectedPersonsCount());
-        if (request.getEvacuationRequired() != null) alert.setEvacuationRequired(request.getEvacuationRequired());
-        if (request.getResolutionNotes() != null) alert.setResolutionNotes(request.getResolutionNotes());
+        if (request.getTitle() != null)
+            alert.setTitle(request.getTitle());
+        if (request.getDescription() != null)
+            alert.setDescription(request.getDescription());
+        if (request.getSeverity() != null)
+            alert.setSeverity(request.getSeverity());
+        if (request.getStatus() != null)
+            alert.setStatus(request.getStatus());
+        if (request.getLocation() != null)
+            alert.setLocation(request.getLocation());
+        if (request.getInstructions() != null)
+            alert.setInstructions(request.getInstructions());
+        if (request.getEmergencyContacts() != null)
+            alert.setEmergencyContacts(request.getEmergencyContacts());
+        if (request.getAffectedPersonsCount() != null)
+            alert.setAffectedPersonsCount(request.getAffectedPersonsCount());
+        if (request.getEvacuationRequired() != null)
+            alert.setEvacuationRequired(request.getEvacuationRequired());
+        if (request.getResolutionNotes() != null)
+            alert.setResolutionNotes(request.getResolutionNotes());
 
         alert = alertRepository.save(alert);
         return toResponse(alert);
     }
 
     public void deleteAlert(Long id) {
+        // Only ADMIN can delete alerts
+        if (!SecurityUtil.hasRole(Role.ADMIN)) {
+            throw new AccessDeniedException("Only ADMIN can delete alerts");
+        }
         if (!alertRepository.existsById(id)) {
             throw new ResourceNotFoundException("Alerte non trouvée avec l'ID: " + id);
         }

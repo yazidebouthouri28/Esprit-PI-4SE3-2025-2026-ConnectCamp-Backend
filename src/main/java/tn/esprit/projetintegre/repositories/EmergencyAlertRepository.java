@@ -19,44 +19,48 @@ import java.util.Optional;
 @Repository
 public interface EmergencyAlertRepository extends JpaRepository<EmergencyAlert, Long> {
 
-    @EntityGraph(attributePaths = {"site", "reportedBy"}) // Charge les relations nécessaires
+    @EntityGraph(attributePaths = { "site", "reportedBy" }) // Charge les relations nécessaires
     Optional<EmergencyAlert> findById(Long id);
 
-    @EntityGraph(attributePaths = {"site", "reportedBy"})
+    @EntityGraph(attributePaths = { "site", "reportedBy" })
     Optional<EmergencyAlert> findByAlertCode(String alertCode);
 
-    @EntityGraph(attributePaths = {"site", "reportedBy"})
+    @EntityGraph(attributePaths = { "site", "reportedBy" })
     Page<EmergencyAlert> findByStatus(AlertStatus status, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"site", "reportedBy"})
+    @EntityGraph(attributePaths = { "site", "reportedBy" })
     Page<EmergencyAlert> findByEmergencyType(EmergencyType type, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"site", "reportedBy"})
+    @EntityGraph(attributePaths = { "site", "reportedBy" })
     Page<EmergencyAlert> findBySeverity(EmergencySeverity severity, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"site", "reportedBy"})
+    @EntityGraph(attributePaths = { "site", "reportedBy" })
     Page<EmergencyAlert> findBySiteId(Long siteId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"site", "reportedBy"})
+    @EntityGraph(attributePaths = { "site", "reportedBy" })
     @Query("SELECT ea FROM EmergencyAlert ea WHERE ea.status IN ('ACTIVE', 'ACKNOWLEDGED') ORDER BY ea.severity DESC, ea.reportedAt DESC")
     List<EmergencyAlert> findActiveAlerts();
 
-    @EntityGraph(attributePaths = {"site", "reportedBy"})
+    @EntityGraph(attributePaths = { "site", "reportedBy" })
     @Query("SELECT ea FROM EmergencyAlert ea WHERE ea.site.id = :siteId AND ea.status IN ('ACTIVE', 'ACKNOWLEDGED')")
     List<EmergencyAlert> findActiveAlertsBySite(@Param("siteId") Long siteId);
 
-    @EntityGraph(attributePaths = {"site", "reportedBy"})
+    @EntityGraph(attributePaths = { "site", "reportedBy" })
     @Query("SELECT ea FROM EmergencyAlert ea WHERE ea.severity = 'CRITICAL' AND ea.status = 'ACTIVE'")
     List<EmergencyAlert> findCriticalActiveAlerts();
 
-    @EntityGraph(attributePaths = {"site", "reportedBy"})
+    @EntityGraph(attributePaths = { "site", "reportedBy" })
     @Query("SELECT ea FROM EmergencyAlert ea WHERE ea.reportedAt >= :startDate AND ea.reportedAt <= :endDate")
-    Page<EmergencyAlert> findByDateRange(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+    Page<EmergencyAlert> findByDateRange(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate, Pageable pageable);
 
     @Query("SELECT COUNT(ea) FROM EmergencyAlert ea WHERE ea.site.id = :siteId AND ea.status = :status")
     Long countBySiteIdAndStatus(@Param("siteId") Long siteId, @Param("status") AlertStatus status);
 
-    @EntityGraph(attributePaths = {"site", "reportedBy"})
+    @EntityGraph(attributePaths = { "site", "reportedBy" })
     @Query("SELECT ea FROM EmergencyAlert ea WHERE ea.evacuationRequired = true AND ea.status = 'ACTIVE'")
     List<EmergencyAlert> findActiveEvacuationAlerts();
+
+    @EntityGraph(attributePaths = { "site", "reportedBy" })
+    Page<EmergencyAlert> findByReportedById(Long reporterId, Pageable pageable);
 }
