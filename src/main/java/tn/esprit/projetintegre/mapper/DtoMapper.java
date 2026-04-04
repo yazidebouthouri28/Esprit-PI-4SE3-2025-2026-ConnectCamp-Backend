@@ -763,6 +763,8 @@ public class DtoMapper {
                 .images(entity.getImages())
                 .isActive(entity.getIsActive())
                 .isAvailable(entity.getIsAvailable())
+                .isOrganizerService(entity.getIsOrganizerService())
+                .isCamperOnly(entity.getIsCamperOnly())
                 .maxCapacity(entity.getMaxCapacity())
                 .duration(entity.getDuration())
                 .rating(entity.getRating())
