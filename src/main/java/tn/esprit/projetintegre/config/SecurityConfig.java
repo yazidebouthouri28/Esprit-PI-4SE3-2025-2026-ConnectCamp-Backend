@@ -75,7 +75,8 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST,
                                 "/api/reservations/event",
-                                "/api/reservations/site"
+                                "/api/reservations/site",
+                                "/api/tickets/purchase"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
