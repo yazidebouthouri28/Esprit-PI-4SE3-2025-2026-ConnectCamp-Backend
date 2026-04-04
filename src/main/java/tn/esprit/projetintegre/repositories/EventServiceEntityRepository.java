@@ -13,22 +13,22 @@ import java.util.Optional;
 public interface EventServiceEntityRepository extends JpaRepository<EventServiceEntity, Long> {
 
     @Override
-    @EntityGraph(attributePaths = { "event", "provider" }) // Charge les relations nécessaires
+    @EntityGraph(attributePaths = { "event", "provider", "service" }) // Charge les relations nécessaires
     Optional<EventServiceEntity> findById(Long id);
 
-    @EntityGraph(attributePaths = { "event", "provider" })
+    @EntityGraph(attributePaths = { "event", "provider", "service" })
     List<EventServiceEntity> findByEventId(Long eventId);
 
-    @EntityGraph(attributePaths = { "event", "provider" })
+    @EntityGraph(attributePaths = { "event", "provider", "service" })
     List<EventServiceEntity> findByServiceType(ServiceType type);
 
-    @EntityGraph(attributePaths = { "event", "provider" })
+    @EntityGraph(attributePaths = { "event", "provider", "service" })
     List<EventServiceEntity> findByEventIdAndIncluded(Long eventId, Boolean included);
 
-    @EntityGraph(attributePaths = { "event", "provider" })
+    @EntityGraph(attributePaths = { "event", "provider", "service" })
     List<EventServiceEntity> findByProviderId(Long userId);
 
-    @EntityGraph(attributePaths = { "event", "provider" })
+    @EntityGraph(attributePaths = { "event", "provider", "service" })
     List<EventServiceEntity> findByServiceId(Long serviceId);
 
     // --- Added for Module 1 Requirements --- //
