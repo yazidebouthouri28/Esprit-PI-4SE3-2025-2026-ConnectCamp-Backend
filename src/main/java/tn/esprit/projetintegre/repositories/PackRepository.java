@@ -50,7 +50,7 @@ public interface PackRepository extends JpaRepository<Pack, Long> {
     void deletePackExclusions(@Param("id") Long id);
 
     @Modifying
-    @Query(value = "DELETE FROM pack WHERE id = :id", nativeQuery = true)
+    @Query(value = "DELETE FROM packs WHERE id = :id", nativeQuery = true)
     void deletePackById(@Param("id") Long id);
 
     @Query("SELECT p.id as id, p.name as name, p.description as description, p.packType as packType, " +
