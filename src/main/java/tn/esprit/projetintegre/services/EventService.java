@@ -21,9 +21,9 @@ import tn.esprit.projetintegre.repositories.EventRepository;
 import tn.esprit.projetintegre.repositories.OrganizerRepository;
 import tn.esprit.projetintegre.repositories.SiteRepository;
 import tn.esprit.projetintegre.repositories.UserRepository;
-import tn.esprit.projetintegre.repositories.GamificationRepository;
+import tn.esprit.projetintegre.repositories.BadgeRepository;
 import tn.esprit.projetintegre.repositories.ReservationRepository;
-import tn.esprit.projetintegre.entities.Gamification;
+import tn.esprit.projetintegre.entities.Badge;
 import tn.esprit.projetintegre.entities.Reservation;
 import tn.esprit.projetintegre.enums.ReservationStatus;
 
@@ -37,8 +37,9 @@ public class EventService {
     private final EventRepository eventRepository;
     private final SiteRepository siteRepository;
     private final UserRepository userRepository;
-    private final GamificationRepository gamificationRepository;
+    private final BadgeRepository badgeRepository;
     private final ReservationRepository reservationRepository;
+    private final UserBadgeService userBadgeService;
 
     public List<Event> getAllEvents() {
         return eventRepository.findAll();
@@ -70,7 +71,7 @@ public class EventService {
     }
 
     @Transactional
-    public Event createEvent(Event event, Long siteId, Long organizerId, List<Long> gamificationIds,
+    public Event createEvent(Event event, Long siteId, Long organizerId, List<Long> badgeIds,
             Authentication authentication) {
         if (event.getStartDate() != null && event.getStartDate().isBefore(LocalDateTime.now())) {
             throw new BusinessException("La date de début doit être dans le futur pour un nouvel événement");
@@ -98,18 +99,15 @@ public class EventService {
             event.setStatus(isAdmin(authentication) ? EventStatus.DRAFT : EventStatus.PUBLISHED);
         }
 
-        if (gamificationIds != null && !gamificationIds.isEmpty()) {
-            java.util.List<tn.esprit.projetintegre.entities.Gamification> gamifications = gamificationRepository
-                    .findAllById(gamificationIds);
-            event.setGamifications(new java.util.HashSet<>(gamifications));
+        if (badgeIds != null && !badgeIds.isEmpty()) {
+            java.util.List<Badge> badges = badgeRepository.findAllById(badgeIds);
+            event.setBadges(new java.util.HashSet<>(badges));
         }
 
         return eventRepository.save(event);
     }
 
     private Organizer resolveOrganizer(Long organizerId, String authenticatedUsername) {
-        // If frontend passes an organizerId but it's invalid/not found, fall back to
-        // authenticated user.
         if (organizerId != null && organizerId > 0) {
             var byId = organizerRepository.findById(organizerId);
             if (byId.isPresent()) {
@@ -173,7 +171,7 @@ public class EventService {
     }
 
     @Transactional
-    public Event updateEvent(Long id, Event eventDetails, List<Long> gamificationIds, Authentication authentication) {
+    public Event updateEvent(Long id, Event eventDetails, List<Long> badgeIds, Authentication authentication) {
         Event event = getEventById(id);
         assertOrganizerOwnsEvent(event, authentication);
 
@@ -204,10 +202,9 @@ public class EventService {
         if (eventDetails.getStatus() != null)
             event.setStatus(eventDetails.getStatus());
 
-        if (gamificationIds != null) {
-            java.util.List<tn.esprit.projetintegre.entities.Gamification> gamifications = gamificationRepository
-                    .findAllById(gamificationIds);
-            event.setGamifications(new java.util.HashSet<>(gamifications));
+        if (badgeIds != null) {
+            java.util.List<Badge> badges = badgeRepository.findAllById(badgeIds);
+            event.setBadges(new java.util.HashSet<>(badges));
         }
 
         return eventRepository.save(event);
@@ -229,7 +226,7 @@ public class EventService {
     }
 
     private void awardBadgesToParticipants(Event event) {
-        if (event.getGamifications() == null || event.getGamifications().isEmpty()) {
+        if (event.getBadges() == null || event.getBadges().isEmpty()) {
             return;
         }
 
@@ -240,20 +237,22 @@ public class EventService {
             User user = res.getUser();
             if (user != null) {
                 boolean updated = false;
-                for (Gamification badge : event.getGamifications()) {
+                for (Badge badge : event.getBadges()) {
+                    // Check if already earned is handled in the repository/service usually,
+                    // but we can check here to avoid spamming the service.
                     if (!user.getEarnedBadges().contains(badge)) {
-                        user.getEarnedBadges().add(badge);
-                        user.setExperiencePoints((user.getExperiencePoints() == null ? 0 : user.getExperiencePoints())
-                                + badge.getPointsValue());
+                        tn.esprit.projetintegre.entities.UserBadge ub = new tn.esprit.projetintegre.entities.UserBadge();
+                        ub.setUser(user);
+                        ub.setBadge(badge);
+                        userBadgeService.create(ub);
                         updated = true;
                     }
                 }
                 if (updated) {
                     user.setTotalMissionsCompleted(
                             (user.getTotalMissionsCompleted() == null ? 0 : user.getTotalMissionsCompleted()) + 1);
-                    // Simple leveling: 1000 XP per level
-                    int xp = user.getExperiencePoints() == null ? 0 : user.getExperiencePoints();
-                    user.setLevel((xp / 1000) + 1);
+                    // Leveling and points are now handled inside UserBadgeService.create if needed
+                    // (Actually I added experiencePoints awarding there in the previous turn)
                     userRepository.save(user);
                 }
             }
@@ -271,7 +270,6 @@ public class EventService {
         return eventRepository.save(event);
     }
 
-    @Transactional
     public void incrementViewCount(Long id) {
         Event event = getEventById(id);
         event.setViewCount(event.getViewCount() + 1);

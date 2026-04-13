@@ -365,7 +365,7 @@ public class DtoMapper {
                 .organizerName(entity.getOrganizer() != null ? entity.getOrganizer().getCompanyName() : null)
                 .isFree(entity.getIsFree())
                 .viewCount(entity.getViewCount())
-                .gamifications(toGamificationResponseList(entity.getGamifications()))
+                .gamifications(toGamificationResponseList(entity.getBadges()))
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -483,22 +483,19 @@ public class DtoMapper {
                 .build();
     }
 
-    // Gamification Mapping
-    public GamificationResponse toGamificationResponse(Gamification entity) {
+    // Gamification Mapping (mapping Badge to GamificationResponse for frontend
+    // compatibility)
+    public GamificationResponse toGamificationResponse(Badge entity) {
         if (entity == null)
             return null;
         return GamificationResponse.builder()
                 .id(entity.getId())
                 .name(entity.getName())
-                .description(entity.getDescription())
                 .icon(entity.getIcon())
-                .pointsValue(entity.getPointsValue())
-                .organizerId(entity.getOrganizer() != null ? entity.getOrganizer().getId() : null)
-                .organizerName(entity.getOrganizer() != null && Hibernate.isInitialized(entity.getOrganizer()) ? entity.getOrganizer().getCompanyName() : null)
                 .build();
     }
 
-    public List<GamificationResponse> toGamificationResponseList(java.util.Collection<Gamification> entities) {
+    public List<GamificationResponse> toGamificationResponseList(java.util.Collection<Badge> entities) {
         if (entities == null)
             return Collections.emptyList();
         return entities.stream().map(this::toGamificationResponse).collect(Collectors.toList());

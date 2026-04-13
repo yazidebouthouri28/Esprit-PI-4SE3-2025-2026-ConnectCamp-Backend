@@ -130,9 +130,9 @@ public class User {
     private Integer totalMissionsCompleted = 0;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_gamifications", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "gamification_id"))
+    @JoinTable(name = "user_badges_earned", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "badge_id"))
     @Builder.Default
-    private java.util.Set<Gamification> earnedBadges = new java.util.HashSet<>();
+    private java.util.Set<Badge> earnedBadges = new java.util.HashSet<>();
 
     @CreatedDate
     @Column(updatable = false)

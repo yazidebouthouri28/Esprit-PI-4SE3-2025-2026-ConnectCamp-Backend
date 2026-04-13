@@ -118,9 +118,9 @@ public class Event {
     private List<Reservation> reservations = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "event_gamifications", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "gamification_id"))
+    @JoinTable(name = "event_badges", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "badge_id"))
     @Builder.Default
-    private Set<Gamification> gamifications = new HashSet<>();
+    private Set<Badge> badges = new HashSet<>();
 
     @DecimalMin(value = "0.00", message = "La note ne peut pas être négative")
     @DecimalMax(value = "5.00", message = "La note ne peut pas dépasser 5")

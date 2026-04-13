@@ -26,7 +26,7 @@ import tn.esprit.projetintegre.repositories.EventRepository;
 import tn.esprit.projetintegre.repositories.OrganizerRepository;
 import tn.esprit.projetintegre.repositories.SiteRepository;
 import tn.esprit.projetintegre.repositories.UserRepository;
-import tn.esprit.projetintegre.repositories.GamificationRepository;
+
 import tn.esprit.projetintegre.repositories.ReservationRepository;
 import tn.esprit.projetintegre.exception.BusinessException;
 
@@ -41,8 +41,6 @@ public class EventServiceTest {
     private SiteRepository siteRepository;
     @Mock
     private UserRepository userRepository;
-    @Mock
-    private GamificationRepository gamificationRepository;
     @Mock
     private ReservationRepository reservationRepository;
 
