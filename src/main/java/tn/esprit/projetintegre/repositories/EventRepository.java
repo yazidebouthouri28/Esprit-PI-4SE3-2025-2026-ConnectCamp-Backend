@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import tn.esprit.projetintegre.entities.Event;
 import tn.esprit.projetintegre.enums.EventStatus;
@@ -31,18 +32,18 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     @EntityGraph(attributePaths = { "site", "organizer", "gamifications" })
     @Query("SELECT e FROM Event e WHERE e.status = 'PUBLISHED' AND e.startDate > :now ORDER BY e.startDate")
-    List<Event> findUpcomingEvents(LocalDateTime now, Pageable pageable);
+    List<Event> findUpcomingEvents(@Param("now") LocalDateTime now, Pageable pageable);
 
     @EntityGraph(attributePaths = { "site", "organizer", "gamifications" })
     @Query("SELECT e FROM Event e WHERE e.status = 'PUBLISHED' AND (LOWER(e.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<Event> searchEvents(String keyword, Pageable pageable);
+    Page<Event> searchEvents(@Param("keyword") String keyword, Pageable pageable);
 
     @EntityGraph(attributePaths = { "site", "organizer", "gamifications" })
     List<Event> findByIsPublicTrue();
 
     @Query("SELECT SUM(e.viewCount) FROM Event e WHERE e.organizer.id = :organizerId")
-    Long sumViewCountByOrganizerId(Long organizerId);
+    Long sumViewCountByOrganizerId(@Param("organizerId") Long organizerId);
 
     @Query("SELECT SUM(e.viewCount) FROM Event e")
     Long sumAllViewCounts();
-}
+}

@@ -74,10 +74,11 @@ public class SponsorService {
         sponsor.setContactPosition(sponsorDetails.getContactPosition());
         sponsor.setNotes(sponsorDetails.getNotes());
         sponsor.setTier(sponsorDetails.getTier() != null ? sponsorDetails.getTier() : SponsorTier.BRONZE);
-        sponsor.setIsActive(sponsorDetails.getIsActive() != null ? sponsorDetails.getIsActive() : sponsor.getIsActive());
-        
+        sponsor.setIsActive(
+                sponsorDetails.getIsActive() != null ? sponsorDetails.getIsActive() : sponsor.getIsActive());
+
         Sponsor updatedSponsor = sponsorRepository.save(sponsor);
-        
+
         // Sync logo with user avatar
         if (sponsor.getEmail() != null && sponsor.getLogo() != null) {
             userRepository.findByEmail(sponsor.getEmail()).ifPresent(user -> {
@@ -85,7 +86,7 @@ public class SponsorService {
                 userRepository.save(user);
             });
         }
-        
+
         return updatedSponsor;
     }
 

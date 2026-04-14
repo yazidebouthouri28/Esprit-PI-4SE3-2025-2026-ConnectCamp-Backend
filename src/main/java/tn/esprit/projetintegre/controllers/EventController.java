@@ -43,9 +43,9 @@ public class EventController {
     @GetMapping("/status/{status}")
     @Operation(summary = "Get events by status")
     public ResponseEntity<ApiResponse<PageResponse<EventResponse>>> getEventsByStatus(
-            @PathVariable EventStatus status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @PathVariable("status") EventStatus status,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
         Page<Event> events = eventService.getEventsByStatus(status, PageRequest.of(page, size));
         Page<EventResponse> response = events.map(dtoMapper::toEventResponse);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
@@ -53,7 +53,7 @@ public class EventController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get event by ID")
-    public ResponseEntity<ApiResponse<EventResponse>> getEventById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<EventResponse>> getEventById(@PathVariable("id") Long id) {
         eventService.incrementViewCount(id);
         Event event = eventService.getEventById(id);
         return ResponseEntity.ok(ApiResponse.success(dtoMapper.toEventResponse(event)));
@@ -62,7 +62,7 @@ public class EventController {
     @GetMapping("/upcoming")
     @Operation(summary = "Get upcoming events")
     public ResponseEntity<ApiResponse<List<EventResponse>>> getUpcomingEvents(
-            @RequestParam(defaultValue = "10") int limit) {
+            @RequestParam(value = "limit", defaultValue = "10") int limit) {
         List<Event> events = eventService.getUpcomingEvents(limit);
         return ResponseEntity.ok(ApiResponse.success(dtoMapper.toEventResponseList(events)));
     }
@@ -70,9 +70,9 @@ public class EventController {
     @GetMapping("/search")
     @Operation(summary = "Search events")
     public ResponseEntity<ApiResponse<PageResponse<EventResponse>>> searchEvents(
-            @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam("keyword") String keyword,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
         Page<Event> events = eventService.searchEvents(keyword, PageRequest.of(page, size));
         Page<EventResponse> response = events.map(dtoMapper::toEventResponse);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
@@ -81,9 +81,9 @@ public class EventController {
     @GetMapping("/organizer/{organizerId}")
     @Operation(summary = "Get events by organizer")
     public ResponseEntity<ApiResponse<PageResponse<EventResponse>>> getEventsByOrganizer(
-            @PathVariable Long organizerId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @PathVariable("organizerId") Long organizerId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
             Authentication authentication) {
         eventService.assertCanAccessOrganizerScope(organizerId, authentication);
         Page<Event> events = eventService.getEventsByOrganizer(organizerId, PageRequest.of(page, size));
@@ -94,9 +94,9 @@ public class EventController {
     @GetMapping("/site/{siteId}")
     @Operation(summary = "Get events by site")
     public ResponseEntity<ApiResponse<PageResponse<EventResponse>>> getEventsBySite(
-            @PathVariable Long siteId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @PathVariable("siteId") Long siteId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
         Page<Event> events = eventService.getEventsBySite(siteId, PageRequest.of(page, size));
         Page<EventResponse> response = events.map(dtoMapper::toEventResponse);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
@@ -121,7 +121,7 @@ public class EventController {
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
     @Operation(summary = "Mettre à jour un événement")
     public ResponseEntity<ApiResponse<EventResponse>> updateEvent(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody EventRequest request,
             Authentication authentication) {
         Event updated = eventService.updateEvent(id, mapToEvent(request), request.getGamificationIds(), authentication);
@@ -156,8 +156,8 @@ public class EventController {
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
     @Operation(summary = "Update event status")
     public ResponseEntity<ApiResponse<EventResponse>> updateEventStatus(
-            @PathVariable Long id,
-            @RequestParam EventStatus status,
+            @PathVariable("id") Long id,
+            @RequestParam("status") EventStatus status,
             Authentication authentication) {
         Event updated = eventService.updateEventStatus(id, status, authentication);
         return ResponseEntity.ok(ApiResponse.success("Event status updated", dtoMapper.toEventResponse(updated)));
@@ -167,7 +167,7 @@ public class EventController {
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
     @Operation(summary = "Publish an event")
     public ResponseEntity<ApiResponse<EventResponse>> publishEvent(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             Authentication authentication) {
         Event published = eventService.publishEvent(id, authentication);
         return ResponseEntity
@@ -178,7 +178,7 @@ public class EventController {
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
     @Operation(summary = "Delete/Cancel an event")
     public ResponseEntity<ApiResponse<Void>> deleteEvent(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             Authentication authentication) {
         eventService.deleteEvent(id, authentication);
         return ResponseEntity.ok(ApiResponse.success("Event cancelled", null));
@@ -197,7 +197,7 @@ public class EventController {
     @GetMapping("/organizer/{organizerId}/stats")
     @Operation(summary = "Get organizer events statistics")
     public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getOrganizerStats(
-            @PathVariable Long organizerId,
+            @PathVariable("organizerId") Long organizerId,
             Authentication authentication) {
         eventService.assertCanAccessOrganizerScope(organizerId, authentication);
         Long totalViews = eventService.getTotalViewsByOrganizer(organizerId);

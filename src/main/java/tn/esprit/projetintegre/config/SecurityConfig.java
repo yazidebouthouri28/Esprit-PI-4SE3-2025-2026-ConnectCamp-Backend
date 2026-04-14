@@ -68,7 +68,8 @@ public class SecurityConfig {
                                 "/api/certifications/site/**",
                                 "/api/sponsors/**",
                                 "/api/events/**",
-                                "/api/general-reviews/**"
+                                "/api/general-reviews/**",
+                                "/api/scheduler-logs/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

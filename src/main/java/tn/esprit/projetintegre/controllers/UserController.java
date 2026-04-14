@@ -48,8 +48,8 @@ public class UserController {
     @GetMapping("/active")
     @Operation(summary = "Get active users with pagination")
     public ResponseEntity<ApiResponse<PageResponse<UserDTO>>> getActiveUsers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
         Page<User> users = userService.getActiveUsers(PageRequest.of(page, size));
         Page<UserDTO> userDTOs = users.map(userService::toDTO);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(userDTOs)));
@@ -58,9 +58,9 @@ public class UserController {
     @GetMapping("/search")
     @Operation(summary = "Search users")
     public ResponseEntity<ApiResponse<PageResponse<UserDTO>>> searchUsers(
-            @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam("keyword") String keyword,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
         Page<User> users = userService.searchUsers(keyword, PageRequest.of(page, size));
         Page<UserDTO> userDTOs = users.map(userService::toDTO);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(userDTOs)));
@@ -69,7 +69,7 @@ public class UserController {
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID")
     public ResponseEntity<ApiResponse<UserDTO>> getUserById(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             Authentication authentication) {
         assertCanAccessUser(id, authentication);
         UserDTO user = userService.toDTO(userService.getUserById(id));
@@ -79,7 +79,7 @@ public class UserController {
     @PutMapping("/{id}")
     @Operation(summary = "Update user profile (self or admin)")
     public ResponseEntity<ApiResponse<UserDTO>> updateUserProfile(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody ProfileUpdateRequest request,
             Authentication authentication) {
         assertCanAccessUser(id, authentication);
@@ -94,7 +94,7 @@ public class UserController {
     @PostMapping("/{id}/change-password")
     @Operation(summary = "Change password (self or admin)")
     public ResponseEntity<ApiResponse<Void>> changePassword(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody ChangePasswordRequest request,
             Authentication authentication) {
         assertCanAccessUser(id, authentication);
@@ -127,7 +127,7 @@ public class UserController {
     @PutMapping("/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update user role (Admin only)")
-    public ResponseEntity<ApiResponse<UserDTO>> updateUserRole(@PathVariable Long id, @RequestParam Role role) {
+    public ResponseEntity<ApiResponse<UserDTO>> updateUserRole(@PathVariable("id") Long id, @RequestParam("role") Role role) {
         UserDTO user = userService.toDTO(userService.updateUserRole(id, role));
         return ResponseEntity.ok(ApiResponse.success("Role updated successfully", user));
     }
@@ -135,9 +135,9 @@ public class UserController {
     @PostMapping("/{id}/become-seller")
     @Operation(summary = "Become a seller")
     public ResponseEntity<ApiResponse<UserDTO>> becomeSeller(
-            @PathVariable Long id,
-            @RequestParam String storeName,
-            @RequestParam(required = false) String storeDescription) {
+            @PathVariable("id") Long id,
+            @RequestParam("storeName") String storeName,
+            @RequestParam(value = "storeDescription", required = false) String storeDescription) {
         UserDTO user = userService.toDTO(userService.becomeSeller(id, storeName, storeDescription));
         return ResponseEntity.ok(ApiResponse.success("You are now a seller", user));
     }
@@ -145,7 +145,7 @@ public class UserController {
     @PostMapping("/{id}/suspend")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Suspend user (Admin only)")
-    public ResponseEntity<ApiResponse<UserDTO>> suspendUser(@PathVariable Long id, @RequestParam String reason) {
+    public ResponseEntity<ApiResponse<UserDTO>> suspendUser(@PathVariable("id") Long id, @RequestParam("reason") String reason) {
         UserDTO user = userService.toDTO(userService.suspendUser(id, reason));
         return ResponseEntity.ok(ApiResponse.success("User suspended", user));
     }
@@ -153,7 +153,7 @@ public class UserController {
     @PostMapping("/{id}/unsuspend")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Unsuspend user (Admin only)")
-    public ResponseEntity<ApiResponse<UserDTO>> unsuspendUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserDTO>> unsuspendUser(@PathVariable("id") Long id) {
         UserDTO user = userService.toDTO(userService.unsuspendUser(id));
         return ResponseEntity.ok(ApiResponse.success("User unsuspended", user));
     }
@@ -161,7 +161,7 @@ public class UserController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete user (Admin only)")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable("id") Long id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(ApiResponse.success("User deleted", null));
     }

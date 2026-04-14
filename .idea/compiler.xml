@@ -15,6 +15,7 @@
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.40/lombok-1.18.40.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.40/lombok-1.18.40.jar" />
         </processorPath>
         <module name="projet-integre" />
       </profile>
@@ -23,7 +24,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="backConnect" options="-parameters" />
-      <module name="projet-integre" options="-parameters" />
+      <module name="projet-integre" options="-parameters -parameters" />
       <module name="projetPi" options="-parameters" />
     </option>
   </component>

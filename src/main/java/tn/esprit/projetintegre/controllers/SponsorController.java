@@ -64,7 +64,7 @@ public class SponsorController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get sponsor by ID")
-    public ResponseEntity<ApiResponse<SponsorResponse>> getSponsorById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<SponsorResponse>> getSponsorById(@PathVariable("id") Long id) {
         Sponsor sponsor = sponsorService.getSponsorById(id);
         return ResponseEntity.ok(ApiResponse.success(dtoMapper.toSponsorResponse(sponsor)));
     }
@@ -78,7 +78,7 @@ public class SponsorController {
 
     @GetMapping("/search")
     @Operation(summary = "Search sponsors")
-    public ResponseEntity<ApiResponse<List<SponsorResponse>>> searchSponsors(@RequestParam String keyword) {
+    public ResponseEntity<ApiResponse<List<SponsorResponse>>> searchSponsors(@RequestParam("keyword") String keyword) {
         List<Sponsor> sponsors = sponsorService.searchSponsors(keyword);
         return ResponseEntity.ok(ApiResponse.success(dtoMapper.toSponsorResponseList(sponsors)));
     }
@@ -89,22 +89,24 @@ public class SponsorController {
             @Valid @RequestBody SponsorRequest request) {
         Sponsor sponsor = toSponsorEntity(request);
         Sponsor created = sponsorService.createSponsor(sponsor);
-        return ResponseEntity.ok(ApiResponse.success("Sponsor created successfully", dtoMapper.toSponsorResponse(created)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Sponsor created successfully", dtoMapper.toSponsorResponse(created)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update a sponsor")
     public ResponseEntity<ApiResponse<SponsorResponse>> updateSponsor(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody SponsorRequest request) {
         Sponsor sponsorDetails = toSponsorEntity(request);
         Sponsor updated = sponsorService.updateSponsor(id, sponsorDetails);
-        return ResponseEntity.ok(ApiResponse.success("Sponsor updated successfully", dtoMapper.toSponsorResponse(updated)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Sponsor updated successfully", dtoMapper.toSponsorResponse(updated)));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a sponsor")
-    public ResponseEntity<ApiResponse<Void>> deleteSponsor(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteSponsor(@PathVariable("id") Long id) {
         sponsorService.deleteSponsor(id);
         return ResponseEntity.ok(ApiResponse.success("Sponsor deleted successfully", null));
     }
@@ -126,21 +128,22 @@ public class SponsorController {
 
     @GetMapping("/sponsorships/{id}")
     @Operation(summary = "Get sponsorship by ID")
-    public ResponseEntity<ApiResponse<SponsorshipResponse>> getSponsorshipById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<SponsorshipResponse>> getSponsorshipById(@PathVariable("id") Long id) {
         Sponsorship sponsorship = sponsorService.getSponsorshipById(id);
         return ResponseEntity.ok(ApiResponse.success(dtoMapper.toSponsorshipResponse(sponsorship)));
     }
 
     @GetMapping("/{sponsorId}/sponsorships")
     @Operation(summary = "Get sponsorships by sponsor ID")
-    public ResponseEntity<ApiResponse<List<SponsorshipResponse>>> getSponsorshipsBySponsorId(@PathVariable Long sponsorId) {
+    public ResponseEntity<ApiResponse<List<SponsorshipResponse>>> getSponsorshipsBySponsorId(
+            @PathVariable("sponsorId") Long sponsorId) {
         List<Sponsorship> sponsorships = sponsorService.getSponsorshipsBySponsorId(sponsorId);
         return ResponseEntity.ok(ApiResponse.success(dtoMapper.toSponsorshipResponseList(sponsorships)));
     }
 
     @GetMapping("/sponsorships/event/{eventId}")
     @Operation(summary = "Get sponsorships by event ID")
-    public ResponseEntity<ApiResponse<List<SponsorshipResponse>>> getSponsorshipsByEventId(@PathVariable Long eventId) {
+    public ResponseEntity<ApiResponse<List<SponsorshipResponse>>> getSponsorshipsByEventId(@PathVariable("eventId") Long eventId) {
         List<Sponsorship> sponsorships = sponsorService.getSponsorshipsByEventId(eventId);
         return ResponseEntity.ok(ApiResponse.success(dtoMapper.toSponsorshipResponseList(sponsorships)));
     }
@@ -149,42 +152,46 @@ public class SponsorController {
     @Operation(summary = "Create a new sponsorship")
     public ResponseEntity<ApiResponse<SponsorshipResponse>> createSponsorship(
             @Valid @RequestBody SponsorshipRequest request,
-            @RequestParam Long sponsorId,
-            @RequestParam Long eventId) {
+            @RequestParam("sponsorId") Long sponsorId,
+            @RequestParam("eventId") Long eventId) {
         Sponsorship sponsorship = toSponsorshipEntity(request);
         Sponsorship created = sponsorService.createSponsorship(sponsorship, sponsorId, eventId);
-        return ResponseEntity.ok(ApiResponse.success("Sponsorship created successfully", dtoMapper.toSponsorshipResponse(created)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Sponsorship created successfully", dtoMapper.toSponsorshipResponse(created)));
     }
 
     @PutMapping("/sponsorships/{id}")
     @Operation(summary = "Update a sponsorship")
     public ResponseEntity<ApiResponse<SponsorshipResponse>> updateSponsorship(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody SponsorshipRequest request) {
         Sponsorship sponsorshipDetails = toSponsorshipEntity(request);
         Sponsorship updated = sponsorService.updateSponsorship(id, sponsorshipDetails);
-        return ResponseEntity.ok(ApiResponse.success("Sponsorship updated successfully", dtoMapper.toSponsorshipResponse(updated)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Sponsorship updated successfully", dtoMapper.toSponsorshipResponse(updated)));
     }
 
     @PutMapping("/sponsorships/{id}/mark-paid")
     @Operation(summary = "Mark sponsorship as paid")
-    public ResponseEntity<ApiResponse<SponsorshipResponse>> markAsPaid(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<SponsorshipResponse>> markAsPaid(@PathVariable("id") Long id) {
         Sponsorship updated = sponsorService.markAsPaid(id);
-        return ResponseEntity.ok(ApiResponse.success("Sponsorship marked as paid", dtoMapper.toSponsorshipResponse(updated)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Sponsorship marked as paid", dtoMapper.toSponsorshipResponse(updated)));
     }
 
     @PutMapping("/sponsorships/{id}/status")
     @Operation(summary = "Update sponsorship status")
     public ResponseEntity<ApiResponse<SponsorshipResponse>> updateStatus(
-            @PathVariable Long id,
-            @RequestParam String status) {
+            @PathVariable("id") Long id,
+            @RequestParam("status") String status) {
         Sponsorship updated = sponsorService.updateStatus(id, status);
-        return ResponseEntity.ok(ApiResponse.success("Sponsorship status updated", dtoMapper.toSponsorshipResponse(updated)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Sponsorship status updated", dtoMapper.toSponsorshipResponse(updated)));
     }
 
     @DeleteMapping("/sponsorships/{id}")
     @Operation(summary = "Delete a sponsorship")
-    public ResponseEntity<ApiResponse<Void>> deleteSponsorship(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteSponsorship(@PathVariable("id") Long id) {
         sponsorService.deleteSponsorship(id);
         return ResponseEntity.ok(ApiResponse.success("Sponsorship deleted successfully", null));
     }
@@ -209,7 +216,7 @@ public class SponsorController {
     @PutMapping("/pending-requests/{userId}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Approve sponsor signup request")
-    public ResponseEntity<ApiResponse<Void>> approveSponsorRequest(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<Void>> approveSponsorRequest(@PathVariable("userId") Long userId) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -237,7 +244,7 @@ public class SponsorController {
     @PutMapping("/pending-requests/{userId}/reject")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Reject sponsor signup request")
-    public ResponseEntity<ApiResponse<Void>> rejectSponsorRequest(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<Void>> rejectSponsorRequest(@PathVariable("userId") Long userId) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setSponsorStatus(SponsorStatus.REJECTED);
@@ -280,5 +287,11 @@ public class SponsorController {
                 .tier(request.getTier() != null ? request.getTier() : SponsorTier.BRONZE)
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)
                 .build();
+    }
+
+    @GetMapping("/local-events")
+    @Operation(summary = "Get sponsors matched to local events via Site city (3-table JPQL JOIN: Sponsor → Event → Site)")
+    public ResponseEntity<ApiResponse<java.util.List<tn.esprit.projetintegre.dto.response.SponsorSiteEventDTO>>> getSponsorsLocalEvents() {
+        return ResponseEntity.ok(ApiResponse.success(sponsorRepository.getSponsorsMatchedToLocalEvents()));
     }
 }
