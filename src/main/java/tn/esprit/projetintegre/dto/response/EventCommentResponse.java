@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class EventCommentResponse {
     private Long id;
     private String content;
+    private Integer rating;
     private Long eventId;
     private String eventTitle;
     private Long userId;

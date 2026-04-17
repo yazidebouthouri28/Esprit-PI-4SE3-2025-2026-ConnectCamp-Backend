@@ -29,4 +29,6 @@ public interface EventScheduleItemRepository extends JpaRepository<EventSchedule
 
     @EntityGraph(attributePaths = {"event"})
     List<EventScheduleItem> findByIsBreak(Boolean isBreak);
+
+    void deleteByEventId(Long eventId);
 }

@@ -18,6 +18,9 @@ public class EventCommentRequest {
     @Size(max = 1000, message = "Le commentaire ne peut pas dépasser 1000 caractères")
     private String content;
 
+    @NotNull(message = "The rating is mandatory")
+    private Integer rating;
+
     public String getContent() {
         return content;
     }

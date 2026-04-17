@@ -1,6 +1,5 @@
 package tn.esprit.projetintegre.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import tn.esprit.projetintegre.enums.EventStatus;
@@ -58,10 +57,6 @@ public class EventRequest {
 
     @Size(max = 20, message = "Maximum 20 images autorisées")
     private List<String> images;
-
-    @Size(max = 500, message = "L'URL de la miniature ne peut pas dépasser 500 caractères")
-    @JsonAlias("picture")
-    private String thumbnail;
 
     private Long siteId;
 

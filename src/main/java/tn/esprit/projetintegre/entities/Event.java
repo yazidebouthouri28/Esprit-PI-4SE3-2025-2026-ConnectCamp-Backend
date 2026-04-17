@@ -83,14 +83,9 @@ public class Event {
     @Builder.Default
     private Boolean isFree = false;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "event_images", joinColumns = @JoinColumn(name = "event_id"))
-    @Column(name = "image_url")
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<String> images = new ArrayList<>();
-
-    @Size(max = 500, message = "L'URL de la miniature ne peut pas dépasser 500 caractères")
-    private String thumbnail;
+    private List<EventPhoto> eventPhotos = new ArrayList<>();
 
     @Size(max = 500, message = "Le lieu ne peut pas dépasser 500 caractères")
     private String location;
@@ -117,10 +112,18 @@ public class Event {
     @Builder.Default
     private List<Reservation> reservations = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "event_gamifications", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "gamification_id"))
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private Set<Gamification> gamifications = new HashSet<>();
+    private Set<UserBadge> awardedBadges = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "event_badges", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "badge_id"))
+    @Builder.Default
+    private Set<Badge> badges = new HashSet<>();
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<UserMedal> awardedMedals = new HashSet<>();
 
     @DecimalMin(value = "0.00", message = "La note ne peut pas être négative")
     @DecimalMax(value = "5.00", message = "La note ne peut pas dépasser 5")
@@ -170,5 +173,30 @@ public class Event {
         if (registrationDeadline == null || startDate == null)
             return true;
         return registrationDeadline.isBefore(startDate);
+    }
+
+    @Transient
+    public List<String> getImages() {
+        if (eventPhotos == null || eventPhotos.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return eventPhotos.stream()
+                .map(EventPhoto::getPhotos)
+                .filter(photo -> photo != null && !photo.isBlank())
+                .toList();
+    }
+
+    public void setImages(List<String> images) {
+        if (eventPhotos == null) {
+            eventPhotos = new ArrayList<>();
+        } else {
+            eventPhotos.clear();
+        }
+        if (images == null) {
+            return;
+        }
+        images.stream()
+                .filter(photo -> photo != null && !photo.isBlank())
+                .forEach(photo -> eventPhotos.add(EventPhoto.builder().event(this).photos(photo).build()));
     }
 }

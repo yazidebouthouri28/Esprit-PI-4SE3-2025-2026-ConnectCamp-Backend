@@ -129,10 +129,13 @@ public class User {
     private Integer level = 1;
     private Integer totalMissionsCompleted = 0;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_gamifications", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "gamification_id"))
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private java.util.Set<Gamification> earnedBadges = new java.util.HashSet<>();
+    private java.util.Set<UserBadge> userBadges = new java.util.HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.Set<UserMedal> userMedals = new java.util.HashSet<>();
 
     @CreatedDate
     @Column(updatable = false)

@@ -18,27 +18,31 @@ import java.util.Optional;
 public interface EventRepository extends JpaRepository<Event, Long> {
 
     @Override
-    @EntityGraph(attributePaths = { "site", "organizer", "gamifications" })
+    @EntityGraph(attributePaths = { "site", "organizer", "eventPhotos", "badges" })
+    List<Event> findAll();
+
+    @Override
+    @EntityGraph(attributePaths = { "site", "organizer", "eventPhotos", "badges" })
     Optional<Event> findById(Long id);
 
-    @EntityGraph(attributePaths = { "site", "organizer", "gamifications" })
+    @EntityGraph(attributePaths = { "site", "organizer", "eventPhotos", "badges" })
     Page<Event> findByStatus(EventStatus status, Pageable pageable);
 
-    @EntityGraph(attributePaths = { "site", "organizer", "gamifications" })
+    @EntityGraph(attributePaths = { "site", "organizer", "eventPhotos", "badges" })
     Page<Event> findByOrganizerId(Long organizerId, Pageable pageable);
 
-    @EntityGraph(attributePaths = { "site", "organizer", "gamifications" })
+    @EntityGraph(attributePaths = { "site", "organizer", "eventPhotos", "badges" })
     Page<Event> findBySiteId(Long siteId, Pageable pageable);
 
-    @EntityGraph(attributePaths = { "site", "organizer", "gamifications" })
+    @EntityGraph(attributePaths = { "site", "organizer", "eventPhotos", "badges" })
     @Query("SELECT e FROM Event e WHERE e.status = 'PUBLISHED' AND e.startDate > :now ORDER BY e.startDate")
     List<Event> findUpcomingEvents(@Param("now") LocalDateTime now, Pageable pageable);
 
-    @EntityGraph(attributePaths = { "site", "organizer", "gamifications" })
+    @EntityGraph(attributePaths = { "site", "organizer", "eventPhotos", "badges" })
     @Query("SELECT e FROM Event e WHERE e.status = 'PUBLISHED' AND (LOWER(e.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Event> searchEvents(@Param("keyword") String keyword, Pageable pageable);
 
-    @EntityGraph(attributePaths = { "site", "organizer", "gamifications" })
+    @EntityGraph(attributePaths = { "site", "organizer", "eventPhotos" })
     List<Event> findByIsPublicTrue();
 
     @Query("SELECT SUM(e.viewCount) FROM Event e WHERE e.organizer.id = :organizerId")
@@ -46,4 +50,4 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     @Query("SELECT SUM(e.viewCount) FROM Event e")
     Long sumAllViewCounts();
-}
+}

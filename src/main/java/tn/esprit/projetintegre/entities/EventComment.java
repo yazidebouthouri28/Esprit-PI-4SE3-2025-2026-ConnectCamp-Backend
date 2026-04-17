@@ -33,6 +33,8 @@ public class EventComment {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    private Integer rating;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
@@ -110,6 +112,11 @@ public class EventComment {
 
         public EventCommentBuilder user(User user) {
             eventComment.user = user;
+            return this;
+        }
+
+        public EventCommentBuilder rating(Integer rating) {
+            eventComment.rating = rating;
             return this;
         }
 

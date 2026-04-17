@@ -36,4 +36,6 @@ public interface TicketReservationRepository extends JpaRepository<TicketReserva
 
     @EntityGraph(attributePaths = {"user", "event"})
     Optional<TicketReservation> findById(Long id);
+
+    void deleteByEventId(Long eventId);
 }

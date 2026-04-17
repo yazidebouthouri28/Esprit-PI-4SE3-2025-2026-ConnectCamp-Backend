@@ -3,14 +3,8 @@ package tn.esprit.projetintegre.services;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import tn.esprit.projetintegre.dto.request.GamificationRequest;
-import tn.esprit.projetintegre.entities.Gamification;
-import tn.esprit.projetintegre.entities.Event;
-import tn.esprit.projetintegre.repositories.GamificationRepository;
-import tn.esprit.projetintegre.repositories.EventRepository;
-
-import tn.esprit.projetintegre.repositories.OrganizerRepository;
-import tn.esprit.projetintegre.entities.Organizer;
+import tn.esprit.projetintegre.entities.*;
+import tn.esprit.projetintegre.repositories.*;
 
 import java.util.List;
 
@@ -19,78 +13,123 @@ import java.util.List;
 @Transactional
 public class GamificationService {
 
-    private final GamificationRepository gamificationRepository;
+    private final BadgeRepository badgeRepository;
+    private final MedalRepository medalRepository;
+    private final BadgeRuleRepository badgeRuleRepository;
+    private final UserBadgeRepository userBadgeRepository;
+    private final UserMedalRepository userMedalRepository;
+    private final UserRepository userRepository;
     private final EventRepository eventRepository;
-    private final OrganizerRepository organizerRepository;
 
-    public List<Gamification> getAllGamifications() {
-        return gamificationRepository.findAll();
+    // --- Medal Methods ---
+    public List<Medal> getAllMedals() {
+        return medalRepository.findAll();
     }
 
-    public List<Gamification> getGamificationsByOrganizer(Long organizerId) {
-        return gamificationRepository.findByOrganizerId(organizerId);
+    public Medal getMedalById(Long id) {
+        return medalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Medal not found"));
     }
 
-    public Gamification getGamificationById(Long id) {
-        return gamificationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Gamification not found"));
+    public Medal createMedal(Medal medal) {
+        return medalRepository.save(medal);
     }
 
-    public Gamification createGamification(GamificationRequest request) {
-        Organizer organizer = null;
-        if (request.getOrganizerId() != null) {
-            organizer = organizerRepository.findById(request.getOrganizerId())
-                    .orElseThrow(() -> new RuntimeException("Organizer not found"));
+    public Medal updateMedal(Long id, Medal medalDetails) {
+        Medal medal = getMedalById(id);
+        medal.setName(medalDetails.getName());
+        medal.setIcon(medalDetails.getIcon());
+        medal.setType(medalDetails.getType());
+        return medalRepository.save(medal);
+    }
+
+    public void deleteMedal(Long id) {
+        medalRepository.deleteById(id);
+    }
+
+    // --- Badge Methods ---
+    public List<Badge> getAllBadges() {
+        List<Badge> badges = badgeRepository.findAll();
+        // Initialize lazy associations before leaving transactional boundary.
+        badges.forEach(this::initializeBadgeAssociations);
+        return badges;
+    }
+
+    public Badge getBadgeById(Long id) {
+        Badge badge = badgeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Badge not found"));
+        initializeBadgeAssociations(badge);
+        return badge;
+    }
+
+    public Badge createBadge(Badge badge, Long medalId) {
+        if (medalId != null) {
+            Medal medal = getMedalById(medalId);
+            badge.setMedal(medal);
         }
+        return badgeRepository.save(badge);
+    }
 
-        Gamification gamification = Gamification.builder()
-                .name(request.getName())
-                .description(request.getDescription())
-                .icon(request.getIcon())
-                .pointsValue(request.getPointsValue())
-                .organizer(organizer)
+    public Badge updateBadge(Long id, Badge badgeDetails, Long medalId) {
+        Badge badge = getBadgeById(id);
+        badge.setName(badgeDetails.getName());
+        badge.setIcon(badgeDetails.getIcon());
+        if (medalId != null) {
+            Medal medal = getMedalById(medalId);
+            badge.setMedal(medal);
+        }
+        return badgeRepository.save(badge);
+    }
+
+    public void deleteBadge(Long id) {
+        badgeRepository.deleteById(id);
+    }
+
+    private void initializeBadgeAssociations(Badge badge) {
+        if (badge == null) {
+            return;
+        }
+        if (badge.getMedal() != null) {
+            badge.getMedal().getName();
+        }
+        if (badge.getRules() != null) {
+            badge.getRules().size();
+        }
+    }
+
+    // --- Badge Rule Methods ---
+    public BadgeRule addRuleToBadge(Long badgeId, BadgeRule rule) {
+        Badge badge = getBadgeById(badgeId);
+        rule.setBadge(badge);
+        return badgeRuleRepository.save(rule);
+    }
+
+    // --- Assignment Methods ---
+    public UserBadge awardBadgeToUser(Long userId, Long badgeId, Long eventId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Badge badge = getBadgeById(badgeId);
+        Event event = eventId != null ? eventRepository.findById(eventId).orElse(null) : null;
+
+        UserBadge userBadge = UserBadge.builder()
+                .user(user)
+                .badge(badge)
+                .event(event)
                 .build();
-        return gamificationRepository.save(gamification);
+        return userBadgeRepository.save(userBadge);
     }
 
-    public Gamification updateGamification(Long id, GamificationRequest request) {
-        Gamification gamification = getGamificationById(id);
+    public UserMedal awardMedalToUser(Long userId, Long medalId, Long eventId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Medal medal = getMedalById(medalId);
+        Event event = eventId != null ? eventRepository.findById(eventId).orElse(null) : null;
 
-        // Ownership check could be added here if we pass Authentication,
-        // but for now we'll handle the logic of updating fields.
-
-        gamification.setName(request.getName());
-        gamification.setDescription(request.getDescription());
-        gamification.setIcon(request.getIcon());
-        gamification.setPointsValue(request.getPointsValue());
-
-        if (request.getOrganizerId() != null) {
-            Organizer organizer = organizerRepository.findById(request.getOrganizerId())
-                    .orElseThrow(() -> new RuntimeException("Organizer not found"));
-            gamification.setOrganizer(organizer);
-        }
-
-        return gamificationRepository.save(gamification);
-    }
-
-    public void deleteGamification(Long id) {
-        gamificationRepository.deleteById(id);
-    }
-
-    public void assignGamificationToEvent(Long gamificationId, Long eventId) {
-        Gamification gamification = getGamificationById(gamificationId);
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
-
-        event.getGamifications().add(gamification);
-        eventRepository.save(event);
-    }
-
-    public void removeGamificationFromEvent(Long gamificationId, Long eventId) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
-
-        event.getGamifications().removeIf(g -> g.getId().equals(gamificationId));
-        eventRepository.save(event);
+        UserMedal userMedal = UserMedal.builder()
+                .user(user)
+                .medal(medal)
+                .event(event)
+                .build();
+        return userMedalRepository.save(userMedal);
     }
 }

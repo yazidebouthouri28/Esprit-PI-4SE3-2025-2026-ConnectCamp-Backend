@@ -25,7 +25,8 @@ public class EventResponse {
     private BigDecimal price;
     private Boolean isFree;
     private List<String> images;
-    private String thumbnail;
+    private Integer likesCount;
+    private Integer dislikesCount;
     private Integer viewCount;
     private Double latitude; // ← EST-CE QUE C’EST ICI ?
     private Double longitude;

@@ -38,4 +38,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     @EntityGraph(attributePaths = { "user", "event" })
     List<Reservation> findByEventIdAndStatus(Long eventId, ReservationStatus status);
+
+    void deleteByEventId(Long eventId);
 }

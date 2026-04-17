@@ -48,4 +48,6 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long> 
     @EntityGraph(attributePaths = {"event", "user", "ticket"})
     @Query("SELECT COUNT(p) FROM Participant p WHERE p.event.id = :eventId AND p.checkedIn = :checkedIn")
     long countByEventIdAndCheckedIn(@Param("eventId") Long eventId, @Param("checkedIn") Boolean checkedIn);
+
+    void deleteByEventId(Long eventId);
 }

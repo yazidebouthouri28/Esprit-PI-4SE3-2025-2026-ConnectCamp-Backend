@@ -68,6 +68,7 @@ public class SecurityConfig {
                                 "/api/certifications/site/**",
                                 "/api/sponsors/**",
                                 "/api/events/**",
+                                "/api/gamifications/**",
                                 "/api/general-reviews/**",
                                 "/api/scheduler-logs/**"
                         ).permitAll()

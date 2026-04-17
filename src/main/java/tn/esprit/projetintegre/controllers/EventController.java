@@ -37,7 +37,7 @@ public class EventController {
     @Operation(summary = "Get all events")
     public ResponseEntity<ApiResponse<List<EventResponse>>> getAllEvents() {
         List<Event> events = eventService.getAllEvents();
-        return ResponseEntity.ok(ApiResponse.success(dtoMapper.toEventResponseList(events)));
+        return ResponseEntity.ok(ApiResponse.success(events.stream().map(this::toEventResponse).toList()));
     }
 
     @GetMapping("/status/{status}")
@@ -47,7 +47,7 @@ public class EventController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size) {
         Page<Event> events = eventService.getEventsByStatus(status, PageRequest.of(page, size));
-        Page<EventResponse> response = events.map(dtoMapper::toEventResponse);
+        Page<EventResponse> response = events.map(this::toEventResponse);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
     }
 
@@ -56,7 +56,7 @@ public class EventController {
     public ResponseEntity<ApiResponse<EventResponse>> getEventById(@PathVariable("id") Long id) {
         eventService.incrementViewCount(id);
         Event event = eventService.getEventById(id);
-        return ResponseEntity.ok(ApiResponse.success(dtoMapper.toEventResponse(event)));
+        return ResponseEntity.ok(ApiResponse.success(toEventResponse(event)));
     }
 
     @GetMapping("/upcoming")
@@ -64,7 +64,7 @@ public class EventController {
     public ResponseEntity<ApiResponse<List<EventResponse>>> getUpcomingEvents(
             @RequestParam(value = "limit", defaultValue = "10") int limit) {
         List<Event> events = eventService.getUpcomingEvents(limit);
-        return ResponseEntity.ok(ApiResponse.success(dtoMapper.toEventResponseList(events)));
+        return ResponseEntity.ok(ApiResponse.success(events.stream().map(this::toEventResponse).toList()));
     }
 
     @GetMapping("/search")
@@ -74,7 +74,7 @@ public class EventController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size) {
         Page<Event> events = eventService.searchEvents(keyword, PageRequest.of(page, size));
-        Page<EventResponse> response = events.map(dtoMapper::toEventResponse);
+        Page<EventResponse> response = events.map(this::toEventResponse);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
     }
 
@@ -87,7 +87,7 @@ public class EventController {
             Authentication authentication) {
         eventService.assertCanAccessOrganizerScope(organizerId, authentication);
         Page<Event> events = eventService.getEventsByOrganizer(organizerId, PageRequest.of(page, size));
-        Page<EventResponse> response = events.map(dtoMapper::toEventResponse);
+        Page<EventResponse> response = events.map(this::toEventResponse);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
     }
 
@@ -98,7 +98,7 @@ public class EventController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size) {
         Page<Event> events = eventService.getEventsBySite(siteId, PageRequest.of(page, size));
-        Page<EventResponse> response = events.map(dtoMapper::toEventResponse);
+        Page<EventResponse> response = events.map(this::toEventResponse);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
     }
 
@@ -114,7 +114,7 @@ public class EventController {
                 request.getOrganizerId(),
                 request.getGamificationIds(),
                 authentication);
-        return ResponseEntity.ok(ApiResponse.success("Événement créé avec succès", dtoMapper.toEventResponse(created)));
+        return ResponseEntity.ok(ApiResponse.success("Événement créé avec succès", toEventResponse(created)));
     }
 
     @PutMapping("/{id}")
@@ -126,11 +126,11 @@ public class EventController {
             Authentication authentication) {
         Event updated = eventService.updateEvent(id, mapToEvent(request), request.getGamificationIds(), authentication);
         return ResponseEntity
-                .ok(ApiResponse.success("Événement mis à jour avec succès", dtoMapper.toEventResponse(updated)));
+                .ok(ApiResponse.success("Événement mis à jour avec succès", toEventResponse(updated)));
     }
 
     private Event mapToEvent(EventRequest request) {
-        return Event.builder()
+        Event event = Event.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .eventType(request.getEventType())
@@ -145,11 +145,11 @@ public class EventController {
                 .isFree(request.getIsFree())
                 .isPublic(request.getIsPublic())
                 .requiresApproval(request.getRequiresApproval())
-                .images(request.getImages())
-                .thumbnail(request.getThumbnail())
                 .status(request.getStatus())
                 .registrationDeadline(request.getRegistrationDeadline())
                 .build();
+        event.setImages(request.getImages());
+        return event;
     }
 
     @PatchMapping("/{id}/status")
@@ -160,7 +160,7 @@ public class EventController {
             @RequestParam("status") EventStatus status,
             Authentication authentication) {
         Event updated = eventService.updateEventStatus(id, status, authentication);
-        return ResponseEntity.ok(ApiResponse.success("Event status updated", dtoMapper.toEventResponse(updated)));
+        return ResponseEntity.ok(ApiResponse.success("Event status updated", toEventResponse(updated)));
     }
 
     @PostMapping("/{id}/publish")
@@ -171,7 +171,14 @@ public class EventController {
             Authentication authentication) {
         Event published = eventService.publishEvent(id, authentication);
         return ResponseEntity
-                .ok(ApiResponse.success("Event published successfully", dtoMapper.toEventResponse(published)));
+                .ok(ApiResponse.success("Event published successfully", toEventResponse(published)));
+    }
+
+    private EventResponse toEventResponse(Event event) {
+        EventResponse response = dtoMapper.toEventResponse(event);
+        response.setLikesCount(eventService.getLikesCount(event.getId()));
+        response.setDislikesCount(eventService.getDislikesCount(event.getId()));
+        return response;
     }
 
     @DeleteMapping("/{id}")

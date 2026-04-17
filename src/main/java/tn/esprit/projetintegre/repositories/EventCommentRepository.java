@@ -23,4 +23,6 @@ public interface EventCommentRepository extends JpaRepository<EventComment, Long
 
     @EntityGraph(attributePaths = {"event", "user"})
     List<EventComment> findByUserId(Long userId);
+
+    void deleteByEventId(Long eventId);
 }

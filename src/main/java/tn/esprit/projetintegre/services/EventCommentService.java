@@ -35,7 +35,7 @@ public class EventCommentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + id));
     }
 
-    public EventComment createComment(Long eventId, Long userId, String content) {
+    public EventComment createComment(Long eventId, Long userId, String content, Integer rating) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
         User user = userRepository.findById(userId)
@@ -45,6 +45,7 @@ public class EventCommentService {
                 .event(event)
                 .user(user)
                 .content(content)
+                .rating(rating)
                 .build();
 
         return eventCommentRepository.save(comment);

@@ -21,10 +21,22 @@ import tn.esprit.projetintegre.repositories.EventRepository;
 import tn.esprit.projetintegre.repositories.OrganizerRepository;
 import tn.esprit.projetintegre.repositories.SiteRepository;
 import tn.esprit.projetintegre.repositories.UserRepository;
-import tn.esprit.projetintegre.repositories.GamificationRepository;
+import tn.esprit.projetintegre.repositories.BadgeRepository;
 import tn.esprit.projetintegre.repositories.ReservationRepository;
-import tn.esprit.projetintegre.entities.Gamification;
+import tn.esprit.projetintegre.repositories.UserBadgeRepository;
+import tn.esprit.projetintegre.repositories.ParticipantRepository;
+import tn.esprit.projetintegre.repositories.EventCommentRepository;
+import tn.esprit.projetintegre.repositories.TicketRepository;
+import tn.esprit.projetintegre.repositories.TicketReservationRepository;
+import tn.esprit.projetintegre.repositories.TicketRequestRepository;
+import tn.esprit.projetintegre.repositories.TimeSlotRepository;
+import tn.esprit.projetintegre.repositories.EventServiceEntityRepository;
+import tn.esprit.projetintegre.repositories.EventScheduleItemRepository;
+import tn.esprit.projetintegre.repositories.EventInteractionRepository;
+import tn.esprit.projetintegre.repositories.EventPhotoRepository;
+import tn.esprit.projetintegre.entities.Badge;
 import tn.esprit.projetintegre.entities.Reservation;
+import tn.esprit.projetintegre.entities.UserBadge;
 import tn.esprit.projetintegre.enums.ReservationStatus;
 
 import java.time.LocalDateTime;
@@ -37,8 +49,19 @@ public class EventService {
     private final EventRepository eventRepository;
     private final SiteRepository siteRepository;
     private final UserRepository userRepository;
-    private final GamificationRepository gamificationRepository;
+    private final BadgeRepository badgeRepository;
     private final ReservationRepository reservationRepository;
+    private final UserBadgeRepository userBadgeRepository;
+    private final ParticipantRepository participantRepository;
+    private final EventCommentRepository eventCommentRepository;
+    private final TicketRepository ticketRepository;
+    private final TicketReservationRepository ticketReservationRepository;
+    private final TicketRequestRepository ticketRequestRepository;
+    private final TimeSlotRepository timeSlotRepository;
+    private final EventServiceEntityRepository eventServiceEntityRepository;
+    private final EventScheduleItemRepository eventScheduleItemRepository;
+    private final EventInteractionRepository eventInteractionRepository;
+    private final EventPhotoRepository eventPhotoRepository;
 
     public List<Event> getAllEvents() {
         return eventRepository.findAll();
@@ -99,9 +122,8 @@ public class EventService {
         }
 
         if (gamificationIds != null && !gamificationIds.isEmpty()) {
-            java.util.List<tn.esprit.projetintegre.entities.Gamification> gamifications = gamificationRepository
-                    .findAllById(gamificationIds);
-            event.setGamifications(new java.util.HashSet<>(gamifications));
+            java.util.List<Badge> badges = badgeRepository.findAllById(gamificationIds);
+            event.setBadges(new java.util.HashSet<>(badges));
         }
 
         return eventRepository.save(event);
@@ -152,7 +174,8 @@ public class EventService {
         }
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ADMIN"));
+                .map(role -> role == null ? "" : role.toUpperCase())
+                .anyMatch(role -> role.contains("ADMIN"));
     }
 
     private void assertOrganizerOwnsEvent(Event event, Authentication authentication) {
@@ -197,17 +220,14 @@ public class EventService {
             event.setIsFree(eventDetails.getIsFree());
         if (eventDetails.getImages() != null)
             event.setImages(eventDetails.getImages());
-        if (eventDetails.getThumbnail() != null)
-            event.setThumbnail(eventDetails.getThumbnail());
         if (eventDetails.getLocation() != null)
             event.setLocation(eventDetails.getLocation());
         if (eventDetails.getStatus() != null)
             event.setStatus(eventDetails.getStatus());
 
         if (gamificationIds != null) {
-            java.util.List<tn.esprit.projetintegre.entities.Gamification> gamifications = gamificationRepository
-                    .findAllById(gamificationIds);
-            event.setGamifications(new java.util.HashSet<>(gamifications));
+            java.util.List<Badge> badges = badgeRepository.findAllById(gamificationIds);
+            event.setBadges(new java.util.HashSet<>(badges));
         }
 
         return eventRepository.save(event);
@@ -229,32 +249,28 @@ public class EventService {
     }
 
     private void awardBadgesToParticipants(Event event) {
-        if (event.getGamifications() == null || event.getGamifications().isEmpty()) {
-            return;
-        }
-
+        // Awards are now handled via UserBadge based on rules or manual assignment.
+        // For now, let's keep it simple and stub it to avoid crashes.
         List<Reservation> confirmedReservations = reservationRepository.findByEventIdAndStatus(event.getId(),
                 ReservationStatus.CONFIRMED);
 
         for (Reservation res : confirmedReservations) {
             User user = res.getUser();
             if (user != null) {
-                boolean updated = false;
-                for (Gamification badge : event.getGamifications()) {
-                    if (!user.getEarnedBadges().contains(badge)) {
-                        user.getEarnedBadges().add(badge);
-                        user.setExperiencePoints((user.getExperiencePoints() == null ? 0 : user.getExperiencePoints())
-                                + badge.getPointsValue());
-                        updated = true;
+                // Award all badges associated with this event category or type
+                List<Badge> relevantBadges = badgeRepository.findAll(); // Simple logic: award all for now, or filter by
+                                                                        // category
+                for (Badge badge : relevantBadges) {
+                    // Check if user already has this badge for this event
+                    if (!userBadgeRepository.existsByUserAndBadgeAndEvent(user, badge, event)) {
+                        UserBadge userBadge = UserBadge.builder()
+                                .user(user)
+                                .badge(badge)
+                                .event(event)
+                                .earnedAt(LocalDateTime.now())
+                                .build();
+                        userBadgeRepository.save(userBadge);
                     }
-                }
-                if (updated) {
-                    user.setTotalMissionsCompleted(
-                            (user.getTotalMissionsCompleted() == null ? 0 : user.getTotalMissionsCompleted()) + 1);
-                    // Simple leveling: 1000 XP per level
-                    int xp = user.getExperiencePoints() == null ? 0 : user.getExperiencePoints();
-                    user.setLevel((xp / 1000) + 1);
-                    userRepository.save(user);
                 }
             }
         }
@@ -282,6 +298,10 @@ public class EventService {
     public void deleteEvent(Long id, Authentication authentication) {
         Event event = getEventById(id);
         assertOrganizerOwnsEvent(event, authentication);
+        if (isAdmin(authentication)) {
+            hardDeleteEvent(event);
+            return;
+        }
         event.setStatus(EventStatus.CANCELLED);
         eventRepository.save(event);
     }
@@ -291,9 +311,15 @@ public class EventService {
         List<Event> events = eventRepository.findAllById(ids);
         for (Event event : events) {
             assertOrganizerOwnsEvent(event, authentication);
-            event.setStatus(EventStatus.CANCELLED);
+            if (isAdmin(authentication)) {
+                hardDeleteEvent(event);
+            } else {
+                event.setStatus(EventStatus.CANCELLED);
+            }
         }
-        eventRepository.saveAll(events);
+        if (!isAdmin(authentication)) {
+            eventRepository.saveAll(events);
+        }
     }
 
     public Long getTotalViewsByOrganizer(Long organizerId) {
@@ -302,5 +328,30 @@ public class EventService {
 
     public Long getTotalViewsForAllEvents() {
         return eventRepository.sumAllViewCounts();
+    }
+
+    public Integer getLikesCount(Long eventId) {
+        return Math.toIntExact(eventInteractionRepository.countByEvent_IdAndLiked(eventId, true));
+    }
+
+    public Integer getDislikesCount(Long eventId) {
+        return Math.toIntExact(eventInteractionRepository.countByEvent_IdAndLiked(eventId, false));
+    }
+
+    private void hardDeleteEvent(Event event) {
+        Long eventId = event.getId();
+        // Delete dependent rows first to satisfy FK constraints.
+        userBadgeRepository.deleteByEventId(eventId);
+        participantRepository.deleteByEventId(eventId);
+        reservationRepository.deleteByEventId(eventId);
+        eventCommentRepository.deleteByEventId(eventId);
+        ticketReservationRepository.deleteByEventId(eventId);
+        ticketRequestRepository.deleteByEventId(eventId);
+        ticketRepository.deleteByEventId(eventId);
+        timeSlotRepository.deleteByEventId(eventId);
+        eventServiceEntityRepository.deleteByEventId(eventId);
+        eventScheduleItemRepository.deleteByEventId(eventId);
+        eventPhotoRepository.deleteByEventId(eventId);
+        eventRepository.deleteById(eventId);
     }
 }

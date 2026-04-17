@@ -5,21 +5,17 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import tn.esprit.projetintegre.dto.ApiResponse;
-import tn.esprit.projetintegre.dto.request.GamificationRequest;
-import tn.esprit.projetintegre.dto.response.GamificationResponse;
-import tn.esprit.projetintegre.entities.Gamification;
-import tn.esprit.projetintegre.entities.Organizer;
-import tn.esprit.projetintegre.entities.User;
+import tn.esprit.projetintegre.dto.request.BadgeRequest;
+import tn.esprit.projetintegre.dto.request.MedalRequest;
+import tn.esprit.projetintegre.dto.response.BadgeResponse;
+import tn.esprit.projetintegre.dto.response.MedalResponse;
+import tn.esprit.projetintegre.entities.Badge;
+import tn.esprit.projetintegre.entities.Medal;
 import tn.esprit.projetintegre.mapper.DtoMapper;
-import tn.esprit.projetintegre.repositories.OrganizerRepository;
-import tn.esprit.projetintegre.repositories.UserRepository;
 import tn.esprit.projetintegre.services.GamificationService;
 
 import java.util.List;
@@ -33,136 +29,106 @@ public class GamificationController {
 
     private final GamificationService gamificationService;
     private final DtoMapper dtoMapper;
-    private final UserRepository userRepository;
-    private final OrganizerRepository organizerRepository;
 
-    private User getAuthenticatedUser(Authentication authentication) {
-        if (authentication == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
-        }
-        return userRepository.findByUsername(authentication.getName())
-                .or(() -> userRepository.findByEmail(authentication.getName()))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    // --- Medal Endpoints ---
+
+    @GetMapping("/medals")
+    @Operation(summary = "Get all medals")
+    public ResponseEntity<ApiResponse<List<MedalResponse>>> getAllMedals() {
+        List<Medal> medals = gamificationService.getAllMedals();
+        return ResponseEntity.ok(ApiResponse.success(dtoMapper.toMedalResponseList(medals)));
     }
 
-    private Organizer getAuthenticatedOrganizer(Authentication authentication) {
-        User user = getAuthenticatedUser(authentication);
-        return organizerRepository.findByUser_Id(user.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Organizer profile required"));
+    @GetMapping("/medals/{id}")
+    @Operation(summary = "Get medal by ID")
+    public ResponseEntity<ApiResponse<MedalResponse>> getMedalById(@PathVariable Long id) {
+        Medal medal = gamificationService.getMedalById(id);
+        return ResponseEntity.ok(ApiResponse.success(dtoMapper.toMedalResponse(medal)));
     }
 
-    @GetMapping
-    @Operation(summary = "Get all gamifications")
-    public ResponseEntity<ApiResponse<List<GamificationResponse>>> getAllGamifications(
-            @RequestParam(required = false) Long organizerId,
-            Authentication authentication) {
-
-        List<Gamification> gamifications;
-
-        if (authentication != null && authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ADMIN"))) {
-            if (organizerId != null) {
-                gamifications = gamificationService.getGamificationsByOrganizer(organizerId);
-            } else {
-                gamifications = gamificationService.getAllGamifications();
-            }
-        } else if (authentication != null) {
-            // Organizer case
-            Organizer organizer = getAuthenticatedOrganizer(authentication);
-            gamifications = gamificationService.getGamificationsByOrganizer(organizer.getId());
-        } else {
-            // Public case
-            gamifications = gamificationService.getAllGamifications();
-        }
-
-        return ResponseEntity.ok(ApiResponse.success(dtoMapper.toGamificationResponseList(gamifications)));
+    @PostMapping("/medals")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create new medal")
+    public ResponseEntity<ApiResponse<MedalResponse>> createMedal(@Valid @RequestBody MedalRequest request) {
+        Medal medal = Medal.builder()
+                .name(request.getName())
+                .icon(request.getIcon())
+                .type(request.getType())
+                .build();
+        return ResponseEntity.ok(ApiResponse.success("Medal created successfully",
+                dtoMapper.toMedalResponse(gamificationService.createMedal(medal))));
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Get gamification by ID")
-    public ResponseEntity<ApiResponse<GamificationResponse>> getGamificationById(@PathVariable Long id) {
-        Gamification gamification = gamificationService.getGamificationById(id);
-        return ResponseEntity.ok(ApiResponse.success(dtoMapper.toGamificationResponse(gamification)));
+    @PutMapping("/medals/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update medal")
+    public ResponseEntity<ApiResponse<MedalResponse>> updateMedal(
+            @PathVariable Long id,
+            @Valid @RequestBody MedalRequest request) {
+        Medal medal = Medal.builder()
+                .name(request.getName())
+                .icon(request.getIcon())
+                .type(request.getType())
+                .build();
+        return ResponseEntity.ok(ApiResponse.success("Medal updated successfully",
+                dtoMapper.toMedalResponse(gamificationService.updateMedal(id, medal))));
     }
 
-    @PostMapping
+    @DeleteMapping("/medals/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete medal")
+    public ResponseEntity<ApiResponse<Void>> deleteMedal(@PathVariable Long id) {
+        gamificationService.deleteMedal(id);
+        return ResponseEntity.ok(ApiResponse.success("Medal deleted successfully", null));
+    }
+
+    // --- Badge Endpoints ---
+
+    @GetMapping("/badges")
+    @Operation(summary = "Get all badges")
+    public ResponseEntity<ApiResponse<List<BadgeResponse>>> getAllBadges() {
+        List<Badge> badges = gamificationService.getAllBadges();
+        return ResponseEntity.ok(ApiResponse.success(dtoMapper.toBadgeResponseList(badges)));
+    }
+
+    @GetMapping("/badges/{id}")
+    @Operation(summary = "Get badge by ID")
+    public ResponseEntity<ApiResponse<BadgeResponse>> getBadgeById(@PathVariable Long id) {
+        Badge badge = gamificationService.getBadgeById(id);
+        return ResponseEntity.ok(ApiResponse.success(dtoMapper.toBadgeResponse(badge)));
+    }
+
+    @PostMapping("/badges")
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
-    @Operation(summary = "Create new gamification")
-    public ResponseEntity<ApiResponse<GamificationResponse>> createGamification(
-            @Valid @RequestBody GamificationRequest request,
-            Authentication authentication) {
-
-        if (authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ORGANIZER") || a.getAuthority().equals("ORGANIZER"))) {
-            Organizer organizer = getAuthenticatedOrganizer(authentication);
-            request.setOrganizerId(organizer.getId());
-        }
-
-        Gamification gamification = gamificationService.createGamification(request);
-        return ResponseEntity.ok(ApiResponse.success("Gamification created successfully",
-                dtoMapper.toGamificationResponse(gamification)));
+    @Operation(summary = "Create new badge")
+    public ResponseEntity<ApiResponse<BadgeResponse>> createBadge(@Valid @RequestBody BadgeRequest request) {
+        Badge badge = Badge.builder()
+                .name(request.getName())
+                .icon(request.getIcon())
+                .build();
+        return ResponseEntity.ok(ApiResponse.success("Badge created successfully",
+                dtoMapper.toBadgeResponse(gamificationService.createBadge(badge, request.getMedalId()))));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/badges/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
-    @Operation(summary = "Update gamification")
-    public ResponseEntity<ApiResponse<GamificationResponse>> updateGamification(@PathVariable Long id,
-            @Valid @RequestBody GamificationRequest request,
-            Authentication authentication) {
-
-        Gamification existing = gamificationService.getGamificationById(id);
-
-        if (authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ORGANIZER") || a.getAuthority().equals("ORGANIZER"))) {
-            Organizer organizer = getAuthenticatedOrganizer(authentication);
-
-            if (existing.getOrganizer() == null || !existing.getOrganizer().getId().equals(organizer.getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own badges");
-            }
-            request.setOrganizerId(organizer.getId());
-        }
-
-        Gamification gamification = gamificationService.updateGamification(id, request);
-        return ResponseEntity.ok(ApiResponse.success("Gamification updated successfully",
-                dtoMapper.toGamificationResponse(gamification)));
+    @Operation(summary = "Update badge")
+    public ResponseEntity<ApiResponse<BadgeResponse>> updateBadge(
+            @PathVariable Long id,
+            @Valid @RequestBody BadgeRequest request) {
+        Badge badge = Badge.builder()
+                .name(request.getName())
+                .icon(request.getIcon())
+                .build();
+        return ResponseEntity.ok(ApiResponse.success("Badge updated successfully",
+                dtoMapper.toBadgeResponse(gamificationService.updateBadge(id, badge, request.getMedalId()))));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/badges/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
-    @Operation(summary = "Delete gamification")
-    public ResponseEntity<ApiResponse<Void>> deleteGamification(@PathVariable Long id,
-            Authentication authentication) {
-
-        Gamification existing = gamificationService.getGamificationById(id);
-
-        if (authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ORGANIZER") || a.getAuthority().equals("ORGANIZER"))) {
-            Organizer organizer = getAuthenticatedOrganizer(authentication);
-
-            if (existing.getOrganizer() == null || !existing.getOrganizer().getId().equals(organizer.getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only delete your own badges");
-            }
-        }
-
-        gamificationService.deleteGamification(id);
-        return ResponseEntity.ok(ApiResponse.success("Gamification deleted successfully", null));
-    }
-
-    @PostMapping("/{gamificationId}/assign/{eventId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
-    @Operation(summary = "Assign a badge to an event")
-    public ResponseEntity<ApiResponse<Void>> assignToEvent(@PathVariable Long gamificationId,
-            @PathVariable Long eventId) {
-        gamificationService.assignGamificationToEvent(gamificationId, eventId);
-        return ResponseEntity.ok(ApiResponse.success("Gamification assigned to event", null));
-    }
-
-    @DeleteMapping("/{gamificationId}/unassign/{eventId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
-    @Operation(summary = "Remove a badge from an event")
-    public ResponseEntity<ApiResponse<Void>> unassignFromEvent(@PathVariable Long gamificationId,
-            @PathVariable Long eventId) {
-        gamificationService.removeGamificationFromEvent(gamificationId, eventId);
-        return ResponseEntity.ok(ApiResponse.success("Gamification removed from event", null));
+    @Operation(summary = "Delete badge")
+    public ResponseEntity<ApiResponse<Void>> deleteBadge(@PathVariable Long id) {
+        gamificationService.deleteBadge(id);
+        return ResponseEntity.ok(ApiResponse.success("Badge deleted successfully", null));
     }
 }
