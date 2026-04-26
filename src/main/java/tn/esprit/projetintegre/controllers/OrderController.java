@@ -34,7 +34,7 @@ public class OrderController {
     private final DtoMapper dtoMapper;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @Operation(summary = "Get all orders (Admin only)")
     public ResponseEntity<ApiResponse<List<OrderResponse>>> getAllOrders() {
         List<Order> orders = orderService.getAllOrders();
@@ -53,7 +53,7 @@ public class OrderController {
     }
 
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @Operation(summary = "Get orders by status (Admin only)")
     public ResponseEntity<ApiResponse<PageResponse<OrderResponse>>> getOrdersByStatus(
             @PathVariable OrderStatus status,
@@ -96,7 +96,7 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @Operation(summary = "Update order status (Admin only)")
     public ResponseEntity<ApiResponse<OrderResponse>> updateOrderStatus(
             @PathVariable Long id,
@@ -116,7 +116,7 @@ public class OrderController {
     }
 
     @GetMapping("/revenue")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @Operation(summary = "Get total revenue (Admin only)")
     public ResponseEntity<ApiResponse<BigDecimal>> getTotalRevenue() {
         BigDecimal revenue = orderService.getTotalRevenue();

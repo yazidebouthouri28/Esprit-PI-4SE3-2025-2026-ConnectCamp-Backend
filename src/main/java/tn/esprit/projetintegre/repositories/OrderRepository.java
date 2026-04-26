@@ -17,30 +17,30 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Override
-    @EntityGraph(attributePaths = {"user", "site", "promotion"}) // Charge les relations nécessaires
+    @EntityGraph(attributePaths = {"user"}) // ✅ Supprimé "site" et "promotion" (site n'existe pas non plus)
     Optional<Order> findById(Long id);
 
-    @EntityGraph(attributePaths = {"user", "site", "promotion"})
+    @EntityGraph(attributePaths = {"user"}) // ✅ Corrigé
     Optional<Order> findByOrderNumber(String orderNumber);
 
-    @EntityGraph(attributePaths = {"user", "site", "promotion"})
+    @EntityGraph(attributePaths = {"user"}) // ✅ Corrigé
     Page<Order> findByUserId(Long userId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"user", "site", "promotion"})
+    @EntityGraph(attributePaths = {"user"}) // ✅ Corrigé
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"user", "site", "promotion"})
+    @EntityGraph(attributePaths = {"user"}) // ✅ Corrigé
     List<Order> findByUserIdAndStatus(Long userId, OrderStatus status);
 
-    @EntityGraph(attributePaths = {"user", "site", "promotion"})
+    @EntityGraph(attributePaths = {"user"}) // ✅ Corrigé
     @Query("SELECT o FROM Order o WHERE o.createdAt BETWEEN :startDate AND :endDate")
     List<Order> findOrdersBetweenDates(LocalDateTime startDate, LocalDateTime endDate);
 
-    @EntityGraph(attributePaths = {"user", "site", "promotion"})
+    @EntityGraph(attributePaths = {"user"}) // ✅ Corrigé
     @Query("SELECT COUNT(o) FROM Order o WHERE o.status = :status")
     long countByStatus(OrderStatus status);
 
-    @EntityGraph(attributePaths = {"user", "site", "promotion"})
+    @EntityGraph(attributePaths = {"user"}) // ✅ Corrigé
     @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.status = 'DELIVERED'")
     java.math.BigDecimal getTotalRevenue();
 }

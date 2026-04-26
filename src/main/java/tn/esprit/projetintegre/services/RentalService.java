@@ -27,7 +27,6 @@ public class RentalService {
     private final RentalRepository rentalRepository;
     private final RentalProductRepository rentalProductRepository;
     private final UserRepository userRepository;
-    private final SiteRepository siteRepository;
     private final ProductRepository productRepository;
 
     public List<RentalResponse> getAll() {
@@ -60,12 +59,7 @@ public class RentalService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id", request.getUserId()));
         rental.setUser(user);
-        
-        if (request.getSiteId() != null) {
-            Site site = siteRepository.findById(request.getSiteId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Site", "id", request.getSiteId()));
-            rental.setSite(site);
-        }
+
         
         rental = rentalRepository.save(rental);
         

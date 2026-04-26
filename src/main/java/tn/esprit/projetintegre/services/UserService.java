@@ -7,11 +7,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.projetintegre.dto.UserDTO;
-import tn.esprit.projetintegre.dto.request.ProfileUpdateRequest;
 import tn.esprit.projetintegre.entities.User;
 import tn.esprit.projetintegre.enums.Role;
 import tn.esprit.projetintegre.exception.ResourceNotFoundException;
-import tn.esprit.projetintegre.repositories.SponsorRepository;
 import tn.esprit.projetintegre.repositories.UserRepository;
 
 import java.time.LocalDateTime;
@@ -22,7 +20,6 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final SponsorRepository sponsorRepository;
     private final PasswordEncoder passwordEncoder;
 
     public List<User> getAllUsers() {
@@ -48,52 +45,20 @@ public class UserService {
     }
 
     @Transactional
-    public User updateUserProfile(Long id, ProfileUpdateRequest req) {
+    public User updateUser(Long id, User userDetails) {
         User user = getUserById(id);
-
-        if (req.getName() != null) user.setName(req.getName());
-        if (req.getPhone() != null) user.setPhone(req.getPhone());
-        if (req.getAddress() != null) user.setAddress(req.getAddress());
-        if (req.getCountry() != null) user.setCountry(req.getCountry());
-        if (req.getAge() != null) user.setAge(req.getAge());
-        if (req.getAvatar() != null) user.setAvatar(req.getAvatar());
-        if (req.getBio() != null) user.setBio(req.getBio());
-        if (req.getLocation() != null) user.setLocation(req.getLocation());
-        if (req.getWebsite() != null) user.setWebsite(req.getWebsite());
-
-        if (req.getEmail() != null && !req.getEmail().isBlank()) {
-            String email = req.getEmail().trim();
-            if (!email.equalsIgnoreCase(user.getEmail()) && userRepository.existsByEmail(email)) {
-                throw new IllegalArgumentException("Email already in use");
-            }
-            if (!email.equalsIgnoreCase(user.getEmail())) {
-                user.setEmail(email);
-            }
-        }
-
-        user.setUpdatedAt(LocalDateTime.now());
-        User updatedUser = userRepository.save(user);
-
-        // Sync avatar with sponsor logo
-        if (req.getAvatar() != null && user.getEmail() != null) {
-            sponsorRepository.findByEmail(user.getEmail()).ifPresent(sponsor -> {
-                sponsor.setLogo(req.getAvatar());
-                sponsorRepository.save(sponsor);
-            });
-        }
-
-        return updatedUser;
-    }
-
-    @Transactional
-    public void changePassword(Long id, String currentPassword, String newPassword) {
-        User user = getUserById(id);
-        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            throw new IllegalArgumentException("Current password is incorrect");
-        }
-        user.setPassword(passwordEncoder.encode(newPassword));
-        user.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(user);
+        
+        if (userDetails.getName() != null) user.setName(userDetails.getName());
+        if (userDetails.getPhone() != null) user.setPhone(userDetails.getPhone());
+        if (userDetails.getAddress() != null) user.setAddress(userDetails.getAddress());
+        if (userDetails.getCountry() != null) user.setCountry(userDetails.getCountry());
+        if (userDetails.getAge() != null) user.setAge(userDetails.getAge());
+        if (userDetails.getAvatar() != null) user.setAvatar(userDetails.getAvatar());
+        if (userDetails.getBio() != null) user.setBio(userDetails.getBio());
+        if (userDetails.getLocation() != null) user.setLocation(userDetails.getLocation());
+        if (userDetails.getWebsite() != null) user.setWebsite(userDetails.getWebsite());
+        
+        return userRepository.save(user);
     }
 
     @Transactional
@@ -172,10 +137,7 @@ public class UserService {
                 .sellerRating(user.getSellerRating())
                 .avatar(user.getAvatar())
                 .bio(user.getBio())
-                .location(user.getLocation())
-                .website(user.getWebsite())
                 .isActive(user.getIsActive())
-                .isSuspended(user.getIsSuspended())
                 .loyaltyPoints(user.getLoyaltyPoints())
                 .loyaltyTier(user.getLoyaltyTier())
                 .experiencePoints(user.getExperiencePoints())

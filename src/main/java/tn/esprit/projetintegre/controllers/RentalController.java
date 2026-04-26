@@ -27,7 +27,7 @@ public class RentalController {
     private final RentalService rentalService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @Operation(summary = "Liste toutes les locations")
     public ResponseEntity<ApiResponse<List<RentalResponse>>> getAll() {
         return ResponseEntity.ok(ApiResponse.success(rentalService.getAll()));
@@ -72,7 +72,7 @@ public class RentalController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @Operation(summary = "Supprime une location")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         rentalService.delete(id);

@@ -57,7 +57,7 @@ public class WarehouseController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @Operation(summary = "Crée un nouvel entrepôt")
     public ResponseEntity<ApiResponse<WarehouseResponse>> create(@Valid @RequestBody WarehouseRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -65,7 +65,7 @@ public class WarehouseController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @Operation(summary = "Met à jour un entrepôt")
     public ResponseEntity<ApiResponse<WarehouseResponse>> update(
             @PathVariable Long id,
@@ -74,7 +74,7 @@ public class WarehouseController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @Operation(summary = "Désactive un entrepôt")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         warehouseService.delete(id);
