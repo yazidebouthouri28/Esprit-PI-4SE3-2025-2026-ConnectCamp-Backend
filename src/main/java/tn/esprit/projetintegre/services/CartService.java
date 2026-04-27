@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.projetintegre.entities.Cart;
 import tn.esprit.projetintegre.entities.CartItem;
 import tn.esprit.projetintegre.entities.Product;
+import tn.esprit.projetintegre.entities.User;
 import tn.esprit.projetintegre.exception.ResourceNotFoundException;
 import tn.esprit.projetintegre.repositories.CartItemRepository;
 import tn.esprit.projetintegre.repositories.CartRepository;
@@ -21,10 +22,20 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final UserService userService ;
+
 
     public Cart getCartByUserId(Long userId) {
         return cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart not found for user: " + userId));
+                .orElseGet(() -> {
+                    User user = userService.getUserById(userId); // inject UserService
+                    Cart newCart = Cart.builder()
+                            .user(user)
+                            .totalAmount(BigDecimal.ZERO)
+                            .discountAmount(BigDecimal.ZERO)
+                            .build();
+                    return cartRepository.save(newCart);
+                });
     }
 
     @Transactional

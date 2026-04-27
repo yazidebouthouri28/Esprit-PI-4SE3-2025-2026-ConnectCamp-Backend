@@ -43,7 +43,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @EntityGraph(attributePaths = {"category", "seller", "images"})
     @Query("SELECT p FROM Product p WHERE p.isActive = true ORDER BY p.salesCount DESC")
     List<Product> findTopSellingProducts(Pageable pageable);
-
+    // ProductRepository.java
+    List<Product> findByCategoryId(Long categoryId);
     @EntityGraph(attributePaths = {"category", "seller", "images"})
     Page<Product> findByIsActiveTrueAndStockQuantityLessThan(int threshold, Pageable pageable);
+
+    List<Product> findTop50ByIsActiveTrue();
+
 }
