@@ -1,0 +1,13 @@
+{
+  "rmse": 19.0933,
+  "mae": 11.8029,
+  "r2": 0.9847,
+  "mape": 5.66,
+  "cv_r2_mean": 0.98,
+  "cv_r2_std": 0.0059,
+  "n_features": 35,
+  "n_train": 2400,
+  "n_test": 600,
+  "feature_importance": {},
+  "engine": "lightgbm/histgbr"
+}

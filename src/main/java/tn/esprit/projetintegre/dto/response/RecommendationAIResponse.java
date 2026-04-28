@@ -31,7 +31,8 @@ public class RecommendationAIResponse {
     public static class ProductSuggestion {
         private Long productId;
         private String productName;     // ← vrai nom depuis BD
-        private BigDecimal price;        private double score;
+        private BigDecimal price;
+        private double score;
         private String reason;
     }
 }
