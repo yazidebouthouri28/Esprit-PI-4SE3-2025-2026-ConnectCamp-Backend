@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.projetintegre.dto.ApiResponse;
 import tn.esprit.projetintegre.dto.request.OrganizerRequest;
@@ -13,7 +14,12 @@ import tn.esprit.projetintegre.dto.response.OrganizerResponse;
 import tn.esprit.projetintegre.entities.Organizer;
 import tn.esprit.projetintegre.entities.User;
 import tn.esprit.projetintegre.enums.Role;
+import tn.esprit.projetintegre.dto.response.SponsorshipResponse;
+import tn.esprit.projetintegre.entities.Sponsorship;
+import tn.esprit.projetintegre.mapper.DtoMapper;
+import tn.esprit.projetintegre.repositories.EventRepository;
 import tn.esprit.projetintegre.repositories.OrganizerRepository;
+import tn.esprit.projetintegre.repositories.SponsorshipRepository;
 import tn.esprit.projetintegre.repositories.UserRepository;
 
 import java.time.LocalDateTime;
@@ -28,6 +34,9 @@ public class OrganizerController {
 
     private final OrganizerRepository organizerRepository;
     private final UserRepository userRepository;
+    private final SponsorshipRepository sponsorshipRepository;
+    private final EventRepository eventRepository;
+    private final DtoMapper dtoMapper;
 
     // GET /api/organizers/by-user/{userId}
     @GetMapping("/by-user/{userId}")
@@ -139,6 +148,57 @@ public class OrganizerController {
                 .createdAt(o.getCreatedAt())
                 .updatedAt(o.getUpdatedAt())
                 .build();
+    }
+
+    /**
+     * Get all events organized by this organizer
+     */
+    @GetMapping("/{organizerId}/events")
+    @Operation(summary = "Get all events for this organizer")
+    @Transactional(readOnly = true)
+    public ResponseEntity<ApiResponse<List<tn.esprit.projetintegre.dto.response.EventResponse>>> getEventsForOrganizer(
+            @PathVariable Long organizerId) {
+        
+        List<tn.esprit.projetintegre.entities.Event> events = eventRepository.findByOrganizerId(
+                organizerId, org.springframework.data.domain.Pageable.unpaged()).getContent();
+        
+        List<tn.esprit.projetintegre.dto.response.EventResponse> eventResponses = events.stream()
+                .map(dtoMapper::toEventResponse)
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(ApiResponse.success(eventResponses));
+    }
+
+    /**
+     * Get sponsorship requests for events organized by this organizer
+     */
+    @GetMapping("/{organizerId}/sponsorship-requests")
+    @Operation(summary = "Get sponsorship requests for organizer's events")
+    @Transactional(readOnly = true)
+    public ResponseEntity<ApiResponse<List<SponsorshipResponse>>> getSponsorshipRequestsForOrganizer(
+            @PathVariable Long organizerId) {
+        
+        // Get all events organized by this organizer
+        List<tn.esprit.projetintegre.entities.Event> events = eventRepository.findByOrganizerId(
+                organizerId, org.springframework.data.domain.Pageable.unpaged()).getContent();
+        
+        if (events.isEmpty()) {
+            return ResponseEntity.ok(ApiResponse.success(java.util.Collections.emptyList()));
+        }
+        
+        List<Long> eventIds = events.stream()
+                .map(event -> event.getId())
+                .collect(Collectors.toList());
+        
+        // Get all sponsorships for these events with REQUESTED status using repository method that fetches details
+        List<Sponsorship> requests = sponsorshipRepository.findAllWithDetails(
+                org.springframework.data.domain.Pageable.unpaged()).getContent().stream()
+                .filter(s -> eventIds.contains(s.getEvent().getId()))
+                .filter(s -> "REQUESTED".equals(s.getStatus()))
+                .collect(Collectors.toList());
+        
+        List<SponsorshipResponse> response = dtoMapper.toSponsorshipResponseList(requests);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     private Organizer createDefaultOrganizerIfEligible(User user) {

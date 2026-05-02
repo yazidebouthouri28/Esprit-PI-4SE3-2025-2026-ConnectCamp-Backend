@@ -57,7 +57,9 @@ public class SecurityConfig {
                                 "/error",
                                 "/actuator/health",
                                 "/actuator/info",
-                                "/actuator/prometheus"
+                                "/actuator/prometheus",
+                                "/ws/**",
+                                "/api/reservations/**"
                         ).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET,
                                 "/api/events/organizer/**"
@@ -76,6 +78,7 @@ public class SecurityConfig {
                                 "/api/general-reviews/**",
                                 "/api/scheduler-logs/**"
                         ).permitAll()
+                        .requestMatchers("/api/admin/sponsorships/possible-matches").hasAnyRole("ADMIN", "ORGANIZER")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

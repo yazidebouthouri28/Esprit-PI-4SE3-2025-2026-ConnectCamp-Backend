@@ -8,6 +8,7 @@ import tn.esprit.projetintegre.enums.ChatRoomType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import tn.esprit.projetintegre.entities.Message;
 
 @Entity
 @Table(name = "chat_rooms", indexes = {
@@ -82,7 +83,7 @@ public class ChatRoom {
     private List<User> admins = new ArrayList<>();
 
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ChatMessage> messages = new ArrayList<>();
+    private List<Message> messages = new ArrayList<>();
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

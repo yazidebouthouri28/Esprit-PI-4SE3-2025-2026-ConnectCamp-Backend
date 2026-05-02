@@ -31,4 +31,8 @@ public class MessageResponse {
     private Long replyToId;
     private List<MessageReactionResponse> reactions;
     private LocalDateTime createdAt;
+
+    // Sentiment analysis fields
+    private Double sentimentScore;
+    private String sentimentLabel;
 }

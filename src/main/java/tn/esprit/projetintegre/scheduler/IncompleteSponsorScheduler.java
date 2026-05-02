@@ -18,20 +18,28 @@ public class IncompleteSponsorScheduler {
     @Autowired
     private SchedulerLogRepository schedulerLogRepository;
 
-    // Runs 10 seconds after boot, then every 2 minutes
-    @Scheduled(initialDelay = 5000, fixedRate = 10000)
+    // Staggered: 14 seconds
+    @Scheduled(initialDelay = 5000, fixedRate = 14000)
     @Transactional
     public void suspendIncompleteSponsors() {
         System.out.println("[SCHEDULER] IncompleteSponsorScheduler starting...");
-        LocalDateTime threshold = LocalDateTime.now().minusMinutes(1);
-        int suspendedCount = sponsorRepository.suspendIncompleteSponsors(threshold);
-        
-        String details = "Suspended " + suspendedCount + " incomplete sponsor profiles.";
-        System.out.println("[SCHEDULER] " + details);
+        try {
+            LocalDateTime threshold = LocalDateTime.now().minusMinutes(1);
+            int suspendedCount = sponsorRepository.suspendIncompleteSponsors(threshold);
+            
+            String details = "Suspended " + suspendedCount + " incomplete sponsor profiles.";
+            System.out.println("[SCHEDULER] " + details);
 
-        schedulerLogRepository.save(SchedulerLog.builder()
-                .schedulerName("IncompleteSponsorScheduler")
-                .details(details)
-                .build());
+            schedulerLogRepository.save(SchedulerLog.builder()
+                    .schedulerName("IncompleteSponsorScheduler")
+                    .details(details)
+                    .build());
+        } catch (Exception e) {
+            System.err.println("[SCHEDULER ERROR] IncompleteSponsorScheduler failed: " + e.getMessage());
+            schedulerLogRepository.save(SchedulerLog.builder()
+                    .schedulerName("IncompleteSponsorScheduler")
+                    .details("ERROR: " + e.getMessage())
+                    .build());
+        }
     }
 }

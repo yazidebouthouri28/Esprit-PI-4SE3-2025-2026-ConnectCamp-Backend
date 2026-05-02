@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import tn.esprit.projetintegre.entities.SchedulerLog;
 import tn.esprit.projetintegre.repositories.SchedulerLogRepository;
 
+import tn.esprit.projetintegre.dto.ApiResponse;
+
 @RestController
 @RequestMapping("/api/scheduler-logs")
 @CrossOrigin(origins = "*") // Needed for Angular
@@ -18,13 +20,13 @@ public class SchedulerLogController {
     private SchedulerLogRepository schedulerLogRepository;
 
     @GetMapping
-    public ResponseEntity<Page<SchedulerLog>> getLogs(
+    public ResponseEntity<ApiResponse<Page<SchedulerLog>>> getLogs(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
         
         Page<SchedulerLog> logs = schedulerLogRepository.findAll(
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "executedAt")));
         
-        return ResponseEntity.ok(logs);
+        return ResponseEntity.ok(ApiResponse.success(logs));
     }
 }

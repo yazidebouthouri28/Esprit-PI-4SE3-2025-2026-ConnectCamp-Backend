@@ -16,55 +16,40 @@ import tn.esprit.projetintegre.entities.Event;
 import tn.esprit.projetintegre.entities.Organizer;
 import tn.esprit.projetintegre.entities.Site;
 import tn.esprit.projetintegre.entities.User;
+import tn.esprit.projetintegre.entities.Badge;
+import tn.esprit.projetintegre.entities.UserBadge;
 import tn.esprit.projetintegre.enums.EventStatus;
 import tn.esprit.projetintegre.exception.BusinessException;
 import tn.esprit.projetintegre.exception.ResourceNotFoundException;
+import tn.esprit.projetintegre.repositories.EventInteractionRepository;
 import tn.esprit.projetintegre.repositories.EventRepository;
 import tn.esprit.projetintegre.repositories.OrganizerRepository;
 import tn.esprit.projetintegre.repositories.SiteRepository;
 import tn.esprit.projetintegre.repositories.UserRepository;
 import tn.esprit.projetintegre.repositories.BadgeRepository;
-import tn.esprit.projetintegre.repositories.UserBadgeRepository;
-import tn.esprit.projetintegre.repositories.ParticipantRepository;
-import tn.esprit.projetintegre.repositories.EventCommentRepository;
-import tn.esprit.projetintegre.repositories.TicketRepository;
-import tn.esprit.projetintegre.repositories.TicketReservationRepository;
-import tn.esprit.projetintegre.repositories.TicketRequestRepository;
-import tn.esprit.projetintegre.repositories.TimeSlotRepository;
-import tn.esprit.projetintegre.repositories.EventServiceEntityRepository;
-import tn.esprit.projetintegre.repositories.EventScheduleItemRepository;
-import tn.esprit.projetintegre.repositories.EventInteractionRepository;
-import tn.esprit.projetintegre.repositories.EventPhotoRepository;
-import tn.esprit.projetintegre.entities.Badge;
-import tn.esprit.projetintegre.entities.TicketReservation;
-import tn.esprit.projetintegre.entities.EventInteraction;
-import tn.esprit.projetintegre.entities.EventComment;
+import tn.esprit.projetintegre.repositories.ReservationRepository;
+import tn.esprit.projetintegre.entities.Reservation;
 import tn.esprit.projetintegre.enums.ReservationStatus;
+import tn.esprit.projetintegre.enums.ChatRoomType;
+import tn.esprit.projetintegre.dto.ChatRoomDTO;
 
+import java.util.Objects;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class EventService {
-    private static final int RECOMMENDATION_LIMIT = 8;
-
     private final OrganizerRepository organizerRepository;
     private final EventRepository eventRepository;
     private final SiteRepository siteRepository;
     private final UserRepository userRepository;
     private final BadgeRepository badgeRepository;
-    private final UserBadgeRepository userBadgeRepository;
-    private final ParticipantRepository participantRepository;
-    private final EventCommentRepository eventCommentRepository;
-    private final TicketRepository ticketRepository;
-    private final TicketReservationRepository ticketReservationRepository;
-    private final TicketRequestRepository ticketRequestRepository;
-    private final TimeSlotRepository timeSlotRepository;
-    private final EventServiceEntityRepository eventServiceEntityRepository;
-    private final EventScheduleItemRepository eventScheduleItemRepository;
+    private final ReservationRepository reservationRepository;
+    private final ChatRoomService chatRoomService;
     private final EventInteractionRepository eventInteractionRepository;
-    private final EventPhotoRepository eventPhotoRepository;
 
     public List<Event> getAllEvents() {
         return eventRepository.findAll();
@@ -77,6 +62,124 @@ public class EventService {
     public Event getEventById(Long id) {
         return eventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
+    }
+
+    public Event getManageableEvent(Long id, Authentication authentication) {
+        Event event = getEventById(id);
+        assertOrganizerOwnsEvent(event, authentication);
+        return event;
+    }
+
+    public int getLikesCount(Long eventId) {
+        return (int) eventInteractionRepository.countByEvent_IdAndLiked(eventId, true);
+    }
+
+    public int getDislikesCount(Long eventId) {
+        return (int) eventInteractionRepository.countByEvent_IdAndDisliked(eventId, true);
+    }
+
+    public List<EventRevenueDTO> getRevenueData(Authentication authentication) {
+        if (isAdmin(authentication)) {
+            return eventRepository.getRevenueData();
+        }
+        Organizer organizer = resolveOrganizer(null, authentication != null ? authentication.getName() : null);
+        return eventRepository.getRevenueDataByOrganizerId(organizer.getId());
+    }
+
+    public List<ParticipantResponseDTO> getParticipants(Long eventId, Authentication authentication) {
+        Event event = getEventById(eventId);
+
+        if (!isAdmin(authentication)) {
+            // Allow organizer-owner, otherwise only participants themselves.
+            boolean isOwner = false;
+            try {
+                assertOrganizerOwnsEvent(event, authentication);
+                isOwner = true;
+            } catch (ResponseStatusException ignored) {
+                isOwner = false;
+            }
+
+            if (!isOwner) {
+                User me = authentication == null ? null
+                        : userRepository.findByUsername(authentication.getName())
+                                .or(() -> userRepository.findByEmail(authentication.getName()))
+                                .orElse(null);
+                if (me == null) {
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+                }
+                boolean isParticipant = reservationRepository.findByEventIdAndStatusIn(
+                        eventId,
+                        List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED, ReservationStatus.COMPLETED))
+                        .stream()
+                        .anyMatch(r -> r.getUser() != null && Objects.equals(r.getUser().getId(), me.getId()));
+                if (!isParticipant) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to view participants");
+                }
+            }
+        }
+
+        List<Reservation> reservations = reservationRepository.findByEventIdAndStatusIn(
+                eventId,
+                List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED, ReservationStatus.COMPLETED));
+
+        return reservations.stream().map(r -> ParticipantResponseDTO.builder()
+                .id(r.getId())
+                .registrationDate(r.getCreatedAt())
+                .status(r.getStatus() != null ? r.getStatus().name() : null)
+                .user(r.getUser() == null ? null : ParticipantResponseDTO.UserInfo.builder()
+                        .id(r.getUser().getId())
+                        .name(r.getUser().getName())
+                        .email(r.getUser().getEmail())
+                        .phone(r.getUser().getPhone())
+                        .username(r.getUser().getUsername())
+                        .build())
+                .build()).toList();
+    }
+
+    public List<Event> getRecommendedEventsForUser(Long userId) {
+        // Simple, safe recommendation: use categories/organizers from liked events, exclude already-joined events.
+        List<Long> excludeEventIds = reservationRepository.findAll().stream()
+                .filter(r -> r.getUser() != null && Objects.equals(r.getUser().getId(), userId))
+                .filter(r -> r.getStatus() == ReservationStatus.PENDING
+                        || r.getStatus() == ReservationStatus.CONFIRMED
+                        || r.getStatus() == ReservationStatus.COMPLETED)
+                .map(Reservation::getEvent)
+                .filter(Objects::nonNull)
+                .map(Event::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        var liked = eventInteractionRepository.findByUser_IdAndLikedTrue(userId);
+        List<String> categories = liked.stream()
+                .map(li -> li.getEvent() != null ? li.getEvent().getCategory() : null)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        List<Long> organizerIds = liked.stream()
+                .map(li -> li.getEvent() != null && li.getEvent().getOrganizer() != null ? li.getEvent().getOrganizer().getId()
+                        : null)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        return eventRepository.findAll().stream()
+                .filter(e -> e.getStatus() == EventStatus.PUBLISHED || e.getStatus() == EventStatus.COMPLETED)
+                .filter(e -> !excludeEventIds.contains(e.getId()))
+                .filter(e -> e.getMaxParticipants() == null || (e.getCurrentParticipants() != null
+                        && e.getCurrentParticipants() < e.getMaxParticipants()))
+                .filter(e -> categories.isEmpty() || categories.contains(e.getCategory())
+                        || (e.getOrganizer() != null && organizerIds.contains(e.getOrganizer().getId())))
+                .sorted((a, b) -> {
+                    int byRating = (b.getRating() == null ? 0 : b.getRating().compareTo(a.getRating() == null ? b.getRating() : a.getRating()));
+                    if (byRating != 0) return byRating;
+                    if (a.getStartDate() == null && b.getStartDate() == null) return 0;
+                    if (a.getStartDate() == null) return 1;
+                    if (b.getStartDate() == null) return -1;
+                    return a.getStartDate().compareTo(b.getStartDate());
+                })
+                .limit(8)
+                .toList();
     }
 
     public List<Event> getUpcomingEvents(int limit) {
@@ -125,11 +228,34 @@ public class EventService {
         }
 
         if (gamificationIds != null && !gamificationIds.isEmpty()) {
-            java.util.List<Badge> badges = badgeRepository.findAllById(gamificationIds);
+            List<Badge> badges = badgeRepository.findAllById(gamificationIds);
             event.setBadges(new java.util.HashSet<>(badges));
         }
 
-        return eventRepository.save(event);
+        Event savedEvent = eventRepository.save(event);
+
+        // Auto-create Chat Room for this Event
+        ChatRoomDTO.CreateRequest roomRequest = ChatRoomDTO.CreateRequest.builder()
+                .name(savedEvent.getTitle() + " group chat")
+                .description("Official group chat for " + savedEvent.getTitle())
+                .type(ChatRoomType.EVENT)
+                .relatedEntityType("EVENT")
+                .relatedEntityId(savedEvent.getId())
+                .isPublic(true)
+                .allowJoin(true)
+                .maxMembers(1000)
+                .build();
+        
+        // Use the authenticated user as the creator of the room so they automatically join
+        User creatorUser = userRepository.findByUsername(authenticatedUsername)
+                .or(() -> userRepository.findByEmail(authenticatedUsername))
+                .orElse(savedEvent.getOrganizer() != null ? savedEvent.getOrganizer().getUser() : null);
+
+        if (creatorUser != null) {
+            chatRoomService.createRoom(creatorUser.getId(), roomRequest);
+        }
+
+        return savedEvent;
     }
 
     private Organizer resolveOrganizer(Long organizerId, String authenticatedUsername) {
@@ -177,8 +303,7 @@ public class EventService {
         }
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .map(role -> role == null ? "" : role.toUpperCase())
-                .anyMatch(role -> role.contains("ADMIN"));
+                .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ADMIN"));
     }
 
     private void assertOrganizerOwnsEvent(Event event, Authentication authentication) {
@@ -229,7 +354,7 @@ public class EventService {
             event.setStatus(eventDetails.getStatus());
 
         if (gamificationIds != null) {
-            java.util.List<Badge> badges = badgeRepository.findAllById(gamificationIds);
+            List<Badge> badges = badgeRepository.findAllById(gamificationIds);
             event.setBadges(new java.util.HashSet<>(badges));
         }
 
@@ -240,9 +365,58 @@ public class EventService {
     public Event updateEventStatus(Long id, EventStatus status, Authentication authentication) {
         Event event = getEventById(id);
         assertOrganizerOwnsEvent(event, authentication);
+
+        EventStatus oldStatus = event.getStatus();
         event.setStatus(status);
 
+        if (status == EventStatus.COMPLETED && oldStatus != EventStatus.COMPLETED) {
+            awardBadgesToParticipants(event);
+        }
+
         return eventRepository.save(event);
+    }
+
+    private void awardBadgesToParticipants(Event event) {
+        if (event.getBadges() == null || event.getBadges().isEmpty()) {
+            return;
+        }
+
+        List<Reservation> confirmedReservations = reservationRepository.findByEventIdAndStatus(event.getId(),
+                ReservationStatus.CONFIRMED);
+
+        for (Reservation res : confirmedReservations) {
+            User user = res.getUser();
+            if (user != null) {
+                boolean updated = false;
+                for (Badge badge : event.getBadges()) {
+                    boolean alreadyAwarded = user.getUserBadges().stream()
+                            .anyMatch(userBadge -> userBadge.getBadge() != null
+                                    && userBadge.getBadge().getId() != null
+                                    && userBadge.getBadge().getId().equals(badge.getId())
+                                    && userBadge.getEvent() != null
+                                    && userBadge.getEvent().getId() != null
+                                    && userBadge.getEvent().getId().equals(event.getId()));
+                    if (!alreadyAwarded) {
+                        user.getUserBadges().add(UserBadge.builder()
+                                .user(user)
+                                .badge(badge)
+                                .event(event)
+                                .build());
+                        user.setExperiencePoints((user.getExperiencePoints() == null ? 0 : user.getExperiencePoints())
+                                + 10);
+                        updated = true;
+                    }
+                }
+                if (updated) {
+                    user.setTotalMissionsCompleted(
+                            (user.getTotalMissionsCompleted() == null ? 0 : user.getTotalMissionsCompleted()) + 1);
+                    // Simple leveling: 1000 XP per level
+                    int xp = user.getExperiencePoints() == null ? 0 : user.getExperiencePoints();
+                    user.setLevel((xp / 1000) + 1);
+                    userRepository.save(user);
+                }
+            }
+        }
     }
 
     @Transactional
@@ -258,52 +432,17 @@ public class EventService {
 
     @Transactional
     public void incrementViewCount(Long id) {
-        // Avoid triggering bean-validation on legacy events when only viewCount
-        // changes.
-        // (Event has an @AssertTrue on registrationDeadline/startDate, which can block
-        // reads/refreshes.)
-        eventRepository.incrementViewCount(id);
-    }
-
-    public List<EventRevenueDTO> getRevenueData(Authentication authentication) {
-        if (isAdmin(authentication)) {
-            return eventRepository.getRevenueData();
-        }
-        Organizer org = resolveOrganizer(null, authentication != null ? authentication.getName() : null);
-        return eventRepository.getRevenueDataByOrganizerId(org.getId());
-    }
-
-    public Event getManageableEvent(Long eventId, Authentication authentication) {
-        Event event = getEventById(eventId);
-        assertOrganizerOwnsEvent(event, authentication);
-        return event;
-    }
-
-    public List<ParticipantResponseDTO> getParticipants(Long eventId, Authentication authentication) {
-        getManageableEvent(eventId, authentication);
-
-        List<TicketReservation> reservations = ticketReservationRepository.findByEventIdAndStatusIn(eventId,
-                List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED, ReservationStatus.COMPLETED));
-
-        return reservations.stream().map(r -> ParticipantResponseDTO.builder()
-                .id(r.getId())
-                .registrationDate(r.getCreatedAt())
-                .status(r.getStatus().name())
-                .user(ParticipantResponseDTO.UserInfo.builder()
-                        .id(r.getUser().getId())
-                        .name(r.getUser().getName())
-                        .email(r.getUser().getEmail())
-                        .phone(r.getUser().getPhone())
-                        .username(r.getUser().getUsername())
-                        .build())
-                .build()).toList();
+        Event event = getEventById(id);
+        event.setViewCount(event.getViewCount() + 1);
+        eventRepository.save(event);
     }
 
     @Transactional
     public void deleteEvent(Long id, Authentication authentication) {
         Event event = getEventById(id);
         assertOrganizerOwnsEvent(event, authentication);
-        hardDeleteEvent(event);
+        event.setStatus(EventStatus.CANCELLED);
+        eventRepository.save(event);
     }
 
     @Transactional
@@ -311,8 +450,9 @@ public class EventService {
         List<Event> events = eventRepository.findAllById(ids);
         for (Event event : events) {
             assertOrganizerOwnsEvent(event, authentication);
-            hardDeleteEvent(event);
+            event.setStatus(EventStatus.CANCELLED);
         }
+        eventRepository.saveAll(events);
     }
 
     public Long getTotalViewsByOrganizer(Long organizerId) {
@@ -321,104 +461,5 @@ public class EventService {
 
     public Long getTotalViewsForAllEvents() {
         return eventRepository.sumAllViewCounts();
-    }
-
-    public Integer getLikesCount(Long eventId) {
-        return Math.toIntExact(eventInteractionRepository.countByEvent_IdAndLiked(eventId, true));
-    }
-
-    public Integer getDislikesCount(Long eventId) {
-        return Math.toIntExact(eventInteractionRepository.countByEvent_IdAndDisliked(eventId, true));
-    }
-
-    private void hardDeleteEvent(Event event) {
-        Long eventId = event.getId();
-        // Delete dependent rows first to satisfy FK constraints.
-        userBadgeRepository.deleteByEventId(eventId);
-        participantRepository.deleteByEventId(eventId);
-        eventCommentRepository.deleteByEventId(eventId);
-        ticketReservationRepository.deleteByEventId(eventId);
-        ticketRequestRepository.deleteByEventId(eventId);
-        ticketRepository.deleteByEventId(eventId);
-        timeSlotRepository.deleteByEventId(eventId);
-        eventServiceEntityRepository.deleteByEventId(eventId);
-        eventScheduleItemRepository.deleteByEventId(eventId);
-        eventPhotoRepository.deleteByEventId(eventId);
-        eventRepository.deleteById(eventId);
-    }
-
-    /**
-     * Personalized recommendations based on user interactions:
-     * - Liked events → same category / same organizer
-     * - Highly rated events (≥3 stars) → same category / same organizer
-     * - Confirmed/Completed reservations → same category / same organizer
-     * Excludes: completed events, full events, events user already interacted with.
-     */
-    public List<Event> getRecommendedEventsForUser(Long userId) {
-        Set<String> favoriteCategories = new HashSet<>();
-        Set<Long> favoriteOrganizerIds = new HashSet<>();
-        Set<Long> interactedEventIds = new HashSet<>();
-
-        // 1. Liked events
-        List<EventInteraction> likes = eventInteractionRepository.findByUser_IdAndLikedTrue(userId);
-        for (EventInteraction interaction : likes) {
-            Event e = interaction.getEvent();
-            interactedEventIds.add(e.getId());
-            if (e.getCategory() != null && !e.getCategory().isBlank()) {
-                favoriteCategories.add(e.getCategory());
-            }
-            if (e.getOrganizer() != null) {
-                favoriteOrganizerIds.add(e.getOrganizer().getId());
-            }
-        }
-
-        // 2. Highly rated events (≥ 3 stars)
-        List<EventComment> highRatedComments = eventCommentRepository
-                .findByUserIdAndRatingGreaterThanEqual(userId, 3);
-        for (EventComment comment : highRatedComments) {
-            Event e = comment.getEvent();
-            interactedEventIds.add(e.getId());
-            if (e.getCategory() != null && !e.getCategory().isBlank()) {
-                favoriteCategories.add(e.getCategory());
-            }
-            if (e.getOrganizer() != null) {
-                favoriteOrganizerIds.add(e.getOrganizer().getId());
-            }
-        }
-
-        // 3. Confirmed/Completed reservations (participated)
-        List<TicketReservation> reservations = ticketReservationRepository
-                .findByUserIdAndStatusIn(userId, List.of(ReservationStatus.CONFIRMED, ReservationStatus.COMPLETED));
-        for (TicketReservation reservation : reservations) {
-            Event e = reservation.getEvent();
-            interactedEventIds.add(e.getId());
-            if (e.getCategory() != null && !e.getCategory().isBlank()) {
-                favoriteCategories.add(e.getCategory());
-            }
-            if (e.getOrganizer() != null) {
-                favoriteOrganizerIds.add(e.getOrganizer().getId());
-            }
-        }
-
-        // If no interaction signal, fall back to upcoming events
-        if (favoriteCategories.isEmpty() && favoriteOrganizerIds.isEmpty()) {
-            return eventRepository.findUpcomingEvents(LocalDateTime.now(),
-                    org.springframework.data.domain.PageRequest.of(0, RECOMMENDATION_LIMIT));
-        }
-
-        // Ensure non-empty lists for the IN clause (JPA requires at least one element)
-        List<String> categories = favoriteCategories.isEmpty()
-                ? List.of("__NONE__")
-                : new ArrayList<>(favoriteCategories);
-        List<Long> organizerIds = favoriteOrganizerIds.isEmpty()
-                ? List.of(-1L)
-                : new ArrayList<>(favoriteOrganizerIds);
-        List<Long> excludeIds = interactedEventIds.isEmpty()
-                ? List.of(-1L)
-                : new ArrayList<>(interactedEventIds);
-
-        return eventRepository.findRecommendedEvents(
-                categories, organizerIds, excludeIds,
-                org.springframework.data.domain.PageRequest.of(0, RECOMMENDATION_LIMIT));
     }
 }

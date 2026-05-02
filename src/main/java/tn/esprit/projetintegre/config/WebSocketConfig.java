@@ -24,7 +24,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // The WebSocket handshake endpoint — your frontend connects here
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
-                .withSockJS(); // fallback for browsers that don't support WS
+                .setAllowedOriginPatterns("*");
+                // Removed .withSockJS() to allow raw WebSocket connections
     }
 }

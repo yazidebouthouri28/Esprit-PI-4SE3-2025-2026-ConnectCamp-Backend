@@ -79,7 +79,7 @@ public class Sponsorship {
     private Boolean isActive = true;
     
     @NotBlank(message = "Le statut est obligatoire")
-    @Pattern(regexp = "PENDING|APPROVED|PAID|CANCELLED|COMPLETED", message = "Statut invalide")
+    @Pattern(regexp = "REQUESTED|PENDING|ACCEPTED|DECLINED|APPROVED|PAID|CANCELLED|COMPLETED", message = "Statut invalide")
     private String status;
     
     @Column(length = 500)

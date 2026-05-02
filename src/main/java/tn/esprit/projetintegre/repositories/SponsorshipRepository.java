@@ -1,5 +1,7 @@
 package tn.esprit.projetintegre.repositories;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,10 +24,22 @@ public interface SponsorshipRepository extends JpaRepository<Sponsorship, Long> 
     List<Sponsorship> findBySponsor_Id(Long sponsorId);
 
     @EntityGraph(attributePaths = { "sponsor", "event" })
+    List<Sponsorship> findBySponsor_IdAndStatus(Long sponsorId, String status);
+
+    @EntityGraph(attributePaths = { "sponsor", "event" })
     List<Sponsorship> findByEvent_Id(Long eventId);
 
     @EntityGraph(attributePaths = { "sponsor", "event" })
     List<Sponsorship> findByStatus(String status);
+
+    @EntityGraph(attributePaths = { "sponsor", "event" })
+    @Query("SELECT s FROM Sponsorship s LEFT JOIN FETCH s.sponsor LEFT JOIN FETCH s.event")
+    Page<Sponsorship> findAllWithDetails(Pageable pageable);
+
+    @EntityGraph(attributePaths = { "sponsor", "event" })
+    Page<Sponsorship> findByStatus(String status, Pageable pageable);
+
+    long countByStatus(String status);
 
     @EntityGraph(attributePaths = { "sponsor", "event" })
     List<Sponsorship> findByIsActiveTrue();
@@ -44,4 +58,7 @@ public interface SponsorshipRepository extends JpaRepository<Sponsorship, Long> 
     @EntityGraph(attributePaths = { "sponsor", "event" })
     @Query("SELECT s FROM Sponsorship s LEFT JOIN FETCH s.sponsor LEFT JOIN FETCH s.event WHERE s.id = :id")
     Optional<Sponsorship> findByIdWithDetails(@Param("id") Long id);
+
+    @Query("SELECT s FROM Sponsorship s LEFT JOIN FETCH s.sponsor sp LEFT JOIN FETCH s.event e WHERE sp.id = :sponsorId")
+    List<Sponsorship> findBySponsorIdWithEvent(@Param("sponsorId") Long sponsorId);
 }

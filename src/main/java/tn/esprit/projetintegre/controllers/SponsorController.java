@@ -14,6 +14,7 @@ import tn.esprit.projetintegre.dto.PageResponse;
 import tn.esprit.projetintegre.dto.request.SponsorRequest;
 import tn.esprit.projetintegre.dto.request.SponsorshipRequest;
 import tn.esprit.projetintegre.dto.response.SponsorResponse;
+import tn.esprit.projetintegre.dto.response.SponsorDashboardResponse;
 import tn.esprit.projetintegre.dto.response.SponsorshipResponse;
 import tn.esprit.projetintegre.dto.response.UserSponsorRequestResponse;
 import tn.esprit.projetintegre.entities.Sponsor;
@@ -80,6 +81,16 @@ public class SponsorController {
     @Operation(summary = "Search sponsors")
     public ResponseEntity<ApiResponse<List<SponsorResponse>>> searchSponsors(@RequestParam("keyword") String keyword) {
         List<Sponsor> sponsors = sponsorService.searchSponsors(keyword);
+        return ResponseEntity.ok(ApiResponse.success(dtoMapper.toSponsorResponseList(sponsors)));
+    }
+
+    @GetMapping("/filter")
+    @Operation(summary = "Filter sponsors by tier and status")
+    public ResponseEntity<ApiResponse<List<SponsorResponse>>> filterSponsors(
+            @RequestParam(value = "tier", required = false) SponsorTier tier,
+            @RequestParam(value = "isActive", required = false) Boolean isActive,
+            @RequestParam(value = "location", required = false) String location) {
+        List<Sponsor> sponsors = sponsorService.filterSponsors(tier, isActive, location);
         return ResponseEntity.ok(ApiResponse.success(dtoMapper.toSponsorResponseList(sponsors)));
     }
 
@@ -196,6 +207,22 @@ public class SponsorController {
         return ResponseEntity.ok(ApiResponse.success("Sponsorship deleted successfully", null));
     }
 
+    @PostMapping("/sponsorships/{id}/accept")
+    @Operation(summary = "Accept a sponsorship (Sponsor action)")
+    public ResponseEntity<ApiResponse<SponsorshipResponse>> acceptSponsorship(@PathVariable("id") Long id) {
+        Sponsorship updated = sponsorService.acceptSponsorship(id);
+        return ResponseEntity
+                .ok(ApiResponse.success("Sponsorship accepted successfully", dtoMapper.toSponsorshipResponse(updated)));
+    }
+
+    @PostMapping("/sponsorships/{id}/decline")
+    @Operation(summary = "Decline a sponsorship (Sponsor action)")
+    public ResponseEntity<ApiResponse<SponsorshipResponse>> declineSponsorship(@PathVariable("id") Long id) {
+        Sponsorship updated = sponsorService.declineSponsorship(id);
+        return ResponseEntity
+                .ok(ApiResponse.success("Sponsorship declined", dtoMapper.toSponsorshipResponse(updated)));
+    }
+
     @GetMapping("/pending-requests")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get pending sponsor signup requests")
@@ -233,6 +260,7 @@ public class SponsorController {
                     .phone(user.getPhone())
                     .address(user.getAddress())
                     .country(user.getCountry())
+                    .logo(user.getAvatar())
                     .isActive(true)
                     .build();
             sponsorRepository.save(sponsor);
@@ -293,5 +321,13 @@ public class SponsorController {
     @Operation(summary = "Get sponsors matched to local events via Site city (3-table JPQL JOIN: Sponsor → Event → Site)")
     public ResponseEntity<ApiResponse<java.util.List<tn.esprit.projetintegre.dto.response.SponsorSiteEventDTO>>> getSponsorsLocalEvents() {
         return ResponseEntity.ok(ApiResponse.success(sponsorRepository.getSponsorsMatchedToLocalEvents()));
+    }
+
+    @GetMapping("/dashboard")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get sponsor performance dashboard")
+    public ResponseEntity<ApiResponse<List<SponsorDashboardResponse>>> getSponsorDashboard() {
+        List<SponsorDashboardResponse> dashboard = sponsorService.getSponsorDashboard();
+        return ResponseEntity.ok(ApiResponse.success(dashboard));
     }
 }

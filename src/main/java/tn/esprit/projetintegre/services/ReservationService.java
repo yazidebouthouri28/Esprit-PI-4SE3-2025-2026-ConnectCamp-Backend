@@ -11,7 +11,12 @@ import tn.esprit.projetintegre.entities.Site;
 import tn.esprit.projetintegre.entities.User;
 import tn.esprit.projetintegre.enums.PaymentStatus;
 import tn.esprit.projetintegre.enums.ReservationStatus;
+import tn.esprit.projetintegre.enums.Role;
 import tn.esprit.projetintegre.exception.ResourceNotFoundException;
+import tn.esprit.projetintegre.entities.ChatRoom;
+import tn.esprit.projetintegre.enums.ChatRoomType;
+import tn.esprit.projetintegre.dto.ChatRoomDTO;
+import tn.esprit.projetintegre.repositories.ChatRoomRepository;
 import tn.esprit.projetintegre.repositories.EventRepository;
 import tn.esprit.projetintegre.repositories.ReservationRepository;
 import tn.esprit.projetintegre.repositories.SiteRepository;
@@ -30,6 +35,8 @@ public class ReservationService {
     private final SiteRepository siteRepository;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatRoomService chatRoomService;
 
     public List<Reservation> getAllReservations() {
         return reservationRepository.findAll();
@@ -98,15 +105,19 @@ public class ReservationService {
 
     @Transactional
     public Reservation createEventReservation(Long userId, Long eventId, String guestName,
-            String guestEmail, String guestPhone, int quantity) {
+            String guestEmail, String guestPhone) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
+        if (user.getRole() == Role.SPONSOR) {
+            throw new IllegalStateException("Sponsors cannot reserve tickets. You must be assigned by an admin");
+        }
+
         if (event.getMaxParticipants() != null &&
-                event.getCurrentParticipants() + quantity > event.getMaxParticipants()) {
-            throw new IllegalStateException("Event does not have enough slots available");
+                event.getCurrentParticipants() >= event.getMaxParticipants()) {
+            throw new IllegalStateException("Event is fully booked");
         }
 
         Reservation reservation = Reservation.builder()
@@ -114,11 +125,10 @@ public class ReservationService {
                 .event(event)
                 .checkInDate(event.getEndDate())
                 .checkOutDate(event.getEndDate())
-                .numberOfGuests(quantity)
-                .totalPrice(
-                        event.getIsFree() ? BigDecimal.ZERO : event.getPrice().multiply(BigDecimal.valueOf(quantity)))
-                .status(ReservationStatus.PENDING)
-                .paymentStatus(event.getIsFree() ? PaymentStatus.COMPLETED : PaymentStatus.PENDING)
+                .numberOfGuests(1)
+                .totalPrice(event.getIsFree() ? BigDecimal.ZERO : event.getPrice())
+                .status(ReservationStatus.CONFIRMED)
+                .paymentStatus(PaymentStatus.COMPLETED)
                 .guestName(guestName)
                 .guestEmail(guestEmail)
                 .guestPhone(guestPhone)
@@ -127,8 +137,40 @@ public class ReservationService {
         reservation = reservationRepository.save(reservation);
 
         // Update event participant count
-        event.setCurrentParticipants(event.getCurrentParticipants() + quantity);
+        event.setCurrentParticipants(event.getCurrentParticipants() + 1);
         eventRepository.save(event);
+
+        // Auto-create or auto-join event chat room
+        ChatRoom room = chatRoomRepository.findByRelatedEntity("EVENT", event.getId()).orElse(null);
+        if (room == null) {
+            ChatRoomDTO.CreateRequest createReq = new ChatRoomDTO.CreateRequest();
+            createReq.setName(event.getTitle() + " group chat");
+            createReq.setDescription("Official group chat for " + event.getTitle());
+            createReq.setType(ChatRoomType.EVENT);
+            createReq.setRelatedEntityId(event.getId());
+            createReq.setRelatedEntityType("EVENT");
+            createReq.setAllowJoin(true);
+            createReq.setIsPublic(true);
+
+            Long creatorId = event.getOrganizer() != null && event.getOrganizer().getUser() != null 
+                    ? event.getOrganizer().getUser().getId() : user.getId();
+            try {
+                ChatRoomDTO.Response response = chatRoomService.createRoom(creatorId, createReq);
+                room = chatRoomRepository.findById(response.getId()).orElse(null);
+            } catch (Exception e) {
+                // Ignore room creation error
+            }
+        }
+
+        if (room != null) {
+            try {
+                if (!room.getCreator().getId().equals(user.getId())) {
+                    chatRoomService.addMember(room.getId(), room.getCreator().getId(), user.getId());
+                }
+            } catch (Exception e) {
+                // user might already be a member
+            }
+        }
 
         return reservation;
     }
@@ -138,6 +180,19 @@ public class ReservationService {
         Reservation reservation = getReservationById(id);
         reservation.setStatus(ReservationStatus.CONFIRMED);
         reservation.setConfirmedAt(LocalDateTime.now());
+        
+        // Auto-join event chat room if applicable
+        if (reservation.getEvent() != null) {
+            chatRoomRepository.findByRelatedEntity("EVENT", reservation.getEvent().getId())
+                .ifPresent(room -> {
+                    try {
+                        chatRoomService.addMember(room.getId(), room.getCreator().getId(), reservation.getUser().getId());
+                    } catch (Exception e) {
+                        // user might already be a member
+                    }
+                });
+        }
+        
         return reservationRepository.save(reservation);
     }
 
@@ -151,7 +206,7 @@ public class ReservationService {
         // If event reservation, decrease participant count
         if (reservation.getEvent() != null) {
             Event event = reservation.getEvent();
-            event.setCurrentParticipants(event.getCurrentParticipants() - reservation.getNumberOfGuests());
+            event.setCurrentParticipants(event.getCurrentParticipants() - 1);
             eventRepository.save(event);
         }
 
@@ -166,6 +221,17 @@ public class ReservationService {
         if (status == PaymentStatus.COMPLETED) {
             reservation.setStatus(ReservationStatus.CONFIRMED);
             reservation.setConfirmedAt(LocalDateTime.now());
+            
+            if (reservation.getEvent() != null) {
+                chatRoomRepository.findByRelatedEntity("EVENT", reservation.getEvent().getId())
+                    .ifPresent(room -> {
+                        try {
+                            chatRoomService.addMember(room.getId(), room.getCreator().getId(), reservation.getUser().getId());
+                        } catch (Exception e) {
+                            // user might already be a member
+                        }
+                    });
+            }
         }
         return reservationRepository.save(reservation);
     }

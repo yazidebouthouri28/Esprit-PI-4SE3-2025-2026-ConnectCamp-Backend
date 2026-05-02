@@ -17,6 +17,8 @@ public interface SponsorRepository extends JpaRepository<Sponsor, Long> {
 
     Optional<Sponsor> findByEmail(String email);
 
+    Optional<Sponsor> findByUserId(Long userId);
+
     List<Sponsor> findByIsActiveTrue();
 
     List<Sponsor> findByCity(String city);
@@ -26,6 +28,15 @@ public interface SponsorRepository extends JpaRepository<Sponsor, Long> {
     @Query("SELECT s FROM Sponsor s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "OR LOWER(s.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Sponsor> searchByKeyword(String keyword);
+
+    @Query("SELECT s FROM Sponsor s WHERE " +
+           "(:tier IS NULL OR s.tier = :tier) AND " +
+           "(:isActive IS NULL OR s.isActive = :isActive) AND " +
+           "(:location IS NULL OR LOWER(s.country) LIKE LOWER(CONCAT('%', :location, '%')) OR LOWER(s.city) LIKE LOWER(CONCAT('%', :location, '%')))")
+    List<Sponsor> filterSponsors(
+            @Param("tier") tn.esprit.projetintegre.enums.SponsorTier tier,
+            @Param("isActive") Boolean isActive,
+            @Param("location") String location);
 
     // =========================================================================
     // JPQL 3-TABLE JOIN: Sponsor, Event, Site
@@ -43,13 +54,11 @@ public interface SponsorRepository extends JpaRepository<Sponsor, Long> {
     // =========================================================================
     @Modifying
     @Transactional
-    @Query("UPDATE Sponsor s SET s.tier = 'SILVER' WHERE s.tier = 'BRONZE' AND s.createdAt <= :threshold")
-    int upgradeBronzeToSilver(@Param("threshold") LocalDateTime threshold);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE Sponsor s SET s.tier = 'GOLD' WHERE s.tier = 'SILVER' AND s.createdAt <= :threshold")
-    int upgradeSilverToGold(@Param("threshold") LocalDateTime threshold);
+    @Query("UPDATE Sponsor s SET s.tier = :newTier WHERE s.tier = :oldTier AND s.createdAt <= :threshold")
+    int upgradeTier(
+            @Param("oldTier") tn.esprit.projetintegre.enums.SponsorTier oldTier,
+            @Param("newTier") tn.esprit.projetintegre.enums.SponsorTier newTier,
+            @Param("threshold") LocalDateTime threshold);
 
     @Modifying
     @Transactional

@@ -7,6 +7,7 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import tn.esprit.projetintegre.dto.request.MessageRequest;
+import tn.esprit.projetintegre.dto.request.ReactionRequest;
 import tn.esprit.projetintegre.dto.response.MessageResponse;
 import tn.esprit.projetintegre.services.MessageService;
 
@@ -89,5 +90,21 @@ public class MessageWebSocketController {
     @SendTo("/topic/broadcast")
     public MessageResponse broadcast(@Payload MessageRequest request) {
         return messageService.sendMessage(request);
+    }
+
+    /**
+     * Send a reaction to a message.
+     * Client subscribes to: /topic/room/{chatRoomId}
+     * Client sends to:      /app/chat.react
+     */
+    @MessageMapping("/chat.react")
+    public void reactToMessage(@Payload ReactionRequest request) {
+        MessageResponse response = messageService.reactToMessage(request.getMessageId(), request.getUserId(), request.getEmoji());
+        if (request.getChatRoomId() != null) {
+            messagingTemplate.convertAndSend(
+                    "/topic/room/" + request.getChatRoomId(),
+                    response
+            );
+        }
     }
 }

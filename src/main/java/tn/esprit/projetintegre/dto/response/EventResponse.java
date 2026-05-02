@@ -35,7 +35,6 @@ public class EventResponse {
     private String siteName;
     private Long organizerId;
     private String organizerName;
-    private List<GamificationResponse> gamifications;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -1,5 +1,6 @@
 package tn.esprit.projetintegre.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -23,6 +24,9 @@ public class Sponsor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "user_id")
+    private Long userId;
 
     @Size(min = 5, max = 100, message = "Name must be between 5 and 100 characters")
     @NotBlank(message = "Sponsor name is required")
@@ -54,6 +58,7 @@ public class Sponsor {
     private Boolean isActive = true;
     
     @OneToMany(mappedBy = "sponsor", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Sponsorship> sponsorships = new ArrayList<>();
 
     private LocalDateTime createdAt;

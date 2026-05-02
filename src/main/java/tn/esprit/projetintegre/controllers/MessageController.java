@@ -9,8 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.projetintegre.dto.ApiResponse;
 import tn.esprit.projetintegre.dto.request.MessageRequest;
+import tn.esprit.projetintegre.dto.response.ChatRoomSuggestions;
 import tn.esprit.projetintegre.dto.response.MessageResponse;
+import tn.esprit.projetintegre.dto.response.RoomSentimentStats;
 import tn.esprit.projetintegre.services.MessageService;
+import tn.esprit.projetintegre.services.SmartSuggestionService;
 
 import java.util.List;
 
@@ -20,6 +23,7 @@ import java.util.List;
 public class MessageController {
 
     private final MessageService messageService;
+    private final SmartSuggestionService smartSuggestionService;
 
     // ── Send a message (REST fallback — prefer WebSocket for real-time) ─────────
     @PostMapping
@@ -79,5 +83,25 @@ public class MessageController {
         messageService.markConversationAsRead(receiverId, senderId);
         return ResponseEntity.ok(ApiResponse.success("Messages marqués comme lus", null));
     }
-    
+
+    // ── Admin: Get flagged messages (negative sentiment) ──────────────────────────
+    @GetMapping("/admin/flagged-messages")
+    public ResponseEntity<ApiResponse<List<MessageResponse>>> getFlaggedMessages() {
+        return ResponseEntity.ok(ApiResponse.success(messageService.getFlaggedMessages()));
+    }
+
+    // ── Get room sentiment statistics ────────────────────────────────────────────
+    @GetMapping("/room/{chatRoomId}/sentiment")
+    public ResponseEntity<ApiResponse<RoomSentimentStats>> getRoomSentimentStats(@PathVariable Long chatRoomId) {
+        return ResponseEntity.ok(ApiResponse.success(messageService.getRoomSentimentStats(chatRoomId)));
+    }
+
+    // ── ML-Driven Smart Suggestions for Room Owners ───────────────────────────────
+    @GetMapping("/room/{chatRoomId}/suggestions")
+    public ResponseEntity<ApiResponse<ChatRoomSuggestions>> getSmartSuggestions(@PathVariable Long chatRoomId) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "AI-powered suggestions generated successfully",
+                smartSuggestionService.generateSuggestions(chatRoomId)));
+    }
+
 }

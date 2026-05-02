@@ -33,6 +33,20 @@ public class ChatRoomController {
                 .body(ApiResponse.success("Salon créé avec succès", response));
     }
 
+    @GetMapping("/search/all-active")
+    @Operation(summary = "Rechercher dans tous les salons actifs (nom, description, messages)")
+    public ResponseEntity<ApiResponse<java.util.List<ChatRoomDTO.Response>>> searchAllActive(
+            @RequestParam("keyword") String keyword) {
+        return ResponseEntity.ok(ApiResponse.success(chatRoomService.filterByKeyword(keyword)));
+    }
+
+    @GetMapping("/search/messages-keyword")
+    @Operation(summary = "Rechercher uniquement dans le contenu des messages")
+    public ResponseEntity<ApiResponse<java.util.List<ChatRoomDTO.Response>>> searchByMessageKeyword(
+            @RequestParam("keyword") String keyword) {
+        return ResponseEntity.ok(ApiResponse.success(chatRoomService.searchByMessageKeyword(keyword)));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Obtenir un salon par ID")
     public ResponseEntity<ApiResponse<ChatRoomDTO.Response>> getById(@PathVariable("id") Long id) {
@@ -116,7 +130,11 @@ public class ChatRoomController {
 
     @GetMapping("/room-info")
     @Operation(summary = "Get active chat rooms with creator name and member count (JPQL JOIN: ChatRoom → User)")
-    public ResponseEntity<ApiResponse<java.util.List<tn.esprit.projetintegre.dto.response.ChatRoomInfoDTO>>> getRoomInfo() {
+    public ResponseEntity<ApiResponse<java.util.List<tn.esprit.projetintegre.dto.response.ChatRoomInfoDTO>>> getRoomInfo(
+            @RequestParam(value = "userId", required = false) Long userId) {
+        if (userId != null) {
+            return ResponseEntity.ok(ApiResponse.success(chatRoomRepository.getRoomInfoByCreatorId(userId)));
+        }
         return ResponseEntity.ok(ApiResponse.success(chatRoomRepository.getRoomInfoWithCreatorAndMemberCount()));
     }
 }

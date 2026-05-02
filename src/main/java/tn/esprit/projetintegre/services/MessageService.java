@@ -7,16 +7,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.projetintegre.dto.request.MessageRequest;
 import tn.esprit.projetintegre.dto.response.MessageResponse;
+import tn.esprit.projetintegre.dto.response.RoomSentimentStats;
 import tn.esprit.projetintegre.entities.ChatRoom;
 import tn.esprit.projetintegre.entities.Message;
+import tn.esprit.projetintegre.entities.MessageReaction;
 import tn.esprit.projetintegre.entities.User;
 import tn.esprit.projetintegre.exception.ResourceNotFoundException;
 import tn.esprit.projetintegre.repositories.ChatRoomRepository;
+import tn.esprit.projetintegre.repositories.MessageReactionRepository;
 import tn.esprit.projetintegre.repositories.MessageRepository;
 import tn.esprit.projetintegre.repositories.UserRepository;
+import tn.esprit.projetintegre.services.SentimentAnalysisService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +32,8 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final MessageReactionRepository messageReactionRepository;
+    private final SentimentAnalysisService sentimentAnalysisService;
 
     // ── Send a message ──────────────────────────────────────────────────────────
     public MessageResponse sendMessage(MessageRequest request) {
@@ -51,6 +58,9 @@ public class MessageService {
                     .orElseThrow(() -> new ResourceNotFoundException("Replied message not found with ID: " + request.getReplyToId()));
         }
 
+        // Analyze sentiment of the message content
+        SentimentAnalysisService.SentimentResult sentiment = sentimentAnalysisService.analyzeSentiment(request.getContent());
+
         Message message = Message.builder()
                 .content(request.getContent())
                 .messageType(request.getMessageType())
@@ -65,6 +75,8 @@ public class MessageService {
                 .isRead(false)
                 .isEdited(false)
                 .isDeleted(false)
+                .sentimentScore(sentiment.getScore())
+                .sentimentLabel(sentiment.getLabel())
                 .build();
 
         message = messageRepository.save(message);
@@ -148,6 +160,97 @@ public class MessageService {
                 .collect(Collectors.toList());
     }
 
+    // ── React to message ────────────────────────────────────────────────────────
+    public MessageResponse reactToMessage(Long messageId, Long userId, String emoji) {
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found with ID: " + messageId));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+
+        Optional<MessageReaction> existing = messageReactionRepository.findByMessageIdAndUserId(messageId, userId);
+        if (existing.isPresent()) {
+            MessageReaction reaction = existing.get();
+            if (reaction.getEmoji().equals(emoji)) {
+                // Toggle off
+                messageReactionRepository.delete(reaction);
+                message.getReactions().remove(reaction);
+            } else {
+                // Change emoji
+                reaction.setEmoji(emoji);
+                messageReactionRepository.save(reaction);
+            }
+        } else {
+            // New reaction
+            MessageReaction reaction = MessageReaction.builder()
+                    .message(message)
+                    .user(user)
+                    .emoji(emoji)
+                    .build();
+            reaction = messageReactionRepository.save(reaction);
+            message.getReactions().add(reaction);
+        }
+
+        return toResponse(message);
+    }
+
+    // ── Get flagged messages (negative sentiment) for admin moderation ────────────
+    @Transactional(readOnly = true)
+    public List<MessageResponse> getFlaggedMessages() {
+        return messageRepository.findBySentimentLabelOrderBySentAtDesc("negative")
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    // ── Get room sentiment statistics ────────────────────────────────────────────
+    @Transactional(readOnly = true)
+    public RoomSentimentStats getRoomSentimentStats(Long chatRoomId) {
+        List<Message> messages = messageRepository.findByChatRoomIdOrderBySentAtAsc(chatRoomId);
+
+        int totalMessages = 0;
+        int analyzedMessages = 0;
+        double totalScore = 0.0;
+        int positiveCount = 0;
+        int neutralCount = 0;
+        int negativeCount = 0;
+
+        for (Message msg : messages) {
+            if (msg.getSentimentLabel() != null) {
+                analyzedMessages++;
+                totalScore += msg.getSentimentScore() != null ? msg.getSentimentScore() : 0;
+
+                String label = msg.getSentimentLabel().toLowerCase();
+                if (label.contains("positive")) {
+                    positiveCount++;
+                } else if (label.contains("negative")) {
+                    negativeCount++;
+                } else {
+                    neutralCount++;
+                }
+            }
+            totalMessages++;
+        }
+
+        double averageScore = analyzedMessages > 0 ? totalScore / analyzedMessages : 0.0;
+        String overallLabel = analyzedMessages > 0 ? getLabelFromAverage(averageScore) : "neutral";
+
+        return RoomSentimentStats.builder()
+                .totalMessages(totalMessages)
+                .analyzedMessages(analyzedMessages)
+                .averageScore(Math.round(averageScore * 100.0) / 100.0)
+                .overallLabel(overallLabel)
+                .positiveCount(positiveCount)
+                .neutralCount(neutralCount)
+                .negativeCount(negativeCount)
+                .build();
+    }
+
+    private String getLabelFromAverage(double score) {
+        if (score <= -0.5) return "negative";
+        if (score >= 0.5) return "positive";
+        return "neutral";
+    }
+
     // ── Mapper ──────────────────────────────────────────────────────────────────
     private MessageResponse toResponse(Message message) {
         return MessageResponse.builder()
@@ -183,6 +286,8 @@ public class MessageService {
                                 .build())
                         .collect(Collectors.toList())
                         : null)
+                .sentimentScore(message.getSentimentScore())
+                .sentimentLabel(message.getSentimentLabel())
                 .build();
     }
 }

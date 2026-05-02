@@ -18,20 +18,28 @@ public class ChatMessageCleanupScheduler {
     @Autowired
     private SchedulerLogRepository schedulerLogRepository;
 
-    // Runs 10 seconds after boot, then every 2 minutes
-    @Scheduled(initialDelay = 5000, fixedRate = 10000)
+    // Staggered: 16 seconds
+    @Scheduled(initialDelay = 5000, fixedRate = 16000)
     @Transactional
     public void deleteOldMessages() {
         System.out.println("[SCHEDULER] ChatMessageCleanupScheduler starting...");
-        LocalDateTime threshold = LocalDateTime.now().minusMinutes(1);
-        int deletedCount = chatMessageRepository.deleteOldMessages(threshold);
-        
-        String details = "Deleted " + deletedCount + " old chat messages (> 1 year).";
-        System.out.println("[SCHEDULER] " + details);
+        try {
+            LocalDateTime threshold = LocalDateTime.now().minusMinutes(1);
+            int deletedCount = chatMessageRepository.deleteOldMessages(threshold);
+            
+            String details = "Cleaned up " + deletedCount + " old chat messages.";
+            System.out.println("[SCHEDULER] " + details);
 
-        schedulerLogRepository.save(SchedulerLog.builder()
-                .schedulerName("ChatMessageCleanupScheduler")
-                .details(details)
-                .build());
+            schedulerLogRepository.save(SchedulerLog.builder()
+                    .schedulerName("ChatMessageCleanupScheduler")
+                    .details(details)
+                    .build());
+        } catch (Exception e) {
+            System.err.println("[SCHEDULER ERROR] ChatMessageCleanupScheduler failed: " + e.getMessage());
+            schedulerLogRepository.save(SchedulerLog.builder()
+                    .schedulerName("ChatMessageCleanupScheduler")
+                    .details("ERROR: " + e.getMessage())
+                    .build());
+        }
     }
 }

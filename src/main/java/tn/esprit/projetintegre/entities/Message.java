@@ -80,6 +80,12 @@ public class Message {
     @Builder.Default
     private List<MessageReaction> reactions = new ArrayList<>();
 
+    // Sentiment analysis fields
+    private Double sentimentScore;
+
+    @Size(max = 20, message = "Le label de sentiment ne peut pas dépasser 20 caractères")
+    private String sentimentLabel;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 

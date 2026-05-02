@@ -79,6 +79,24 @@ public class ChatRoomService {
         return chatRoomRepository.searchPublicRooms(keyword, pageable).map(this::toResponse);
     }
 
+    @Transactional(readOnly = true)
+    public List<ChatRoomDTO.Response> filterByKeyword(String keyword) {
+        return chatRoomRepository.searchAllActiveRooms(keyword).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChatRoomDTO.Response> searchByMessageKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        String searchPattern = "%" + keyword.toLowerCase() + "%";
+        return chatRoomRepository.searchByMessageContent(searchPattern).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     public ChatRoomDTO.Response updateRoom(Long id, Long userId, ChatRoomDTO.UpdateRequest request) {
         ChatRoom room = chatRoomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Salon non trouvé avec l'ID: " + id));

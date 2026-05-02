@@ -44,4 +44,8 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     @Modifying
     @Query("UPDATE Message m SET m.isRead = true WHERE m.receiver.id = :receiverId AND m.sender.id = :senderId")
     void markAsRead(Long receiverId, Long senderId);
+
+    // Find messages by sentiment label for moderation
+    @EntityGraph(attributePaths = {"sender", "receiver", "chatRoom"})
+    List<Message> findBySentimentLabelOrderBySentAtDesc(String sentimentLabel);
 }

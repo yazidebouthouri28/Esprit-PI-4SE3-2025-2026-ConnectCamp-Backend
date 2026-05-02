@@ -15,6 +15,8 @@ import tn.esprit.projetintegre.exception.BusinessException;
 import tn.esprit.projetintegre.repositories.EventRepository;
 import tn.esprit.projetintegre.repositories.TicketRequestRepository;
 import tn.esprit.projetintegre.repositories.UserRepository;
+import tn.esprit.projetintegre.repositories.ChatRoomRepository;
+import tn.esprit.projetintegre.services.ChatRoomService;
 
 import java.time.LocalDateTime;
 
@@ -26,6 +28,8 @@ public class TicketRequestService {
     private final TicketRequestRepository ticketRequestRepository;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatRoomService chatRoomService;
 
     public TicketRequestDTO.Response createRequest(Long userId, TicketRequestDTO.CreateRequest request) {
         User user = userRepository.findById(userId)
@@ -137,6 +141,18 @@ public class TicketRequestService {
         ticketRequest.setAdminNotes(request.getAdminNotes());
         ticketRequest.setProcessedAt(LocalDateTime.now());
         ticketRequest.setProcessedBy(processedBy);
+
+        if (request.getStatus() == TicketRequestStatus.APPROVED) {
+            final Long ticketUserId = ticketRequest.getUser().getId();
+            chatRoomRepository.findByRelatedEntity("EVENT", ticketRequest.getEvent().getId())
+                .ifPresent(room -> {
+                    try {
+                        chatRoomService.addMember(room.getId(), room.getCreator().getId(), ticketUserId);
+                    } catch (Exception e) {
+                        // ignore if already joined
+                    }
+                });
+        }
 
         ticketRequest = ticketRequestRepository.save(ticketRequest);
         return toResponse(ticketRequest);

@@ -16,6 +16,9 @@ public class SponsorshipResponse {
     private String sponsorName;
     private Long eventId;
     private String eventTitle;
+    private LocalDateTime eventStartDate;
+    private LocalDateTime eventEndDate;
+    private String eventLocation;
     private String sponsorshipType;
     private String sponsorshipLevel;
     private String description;

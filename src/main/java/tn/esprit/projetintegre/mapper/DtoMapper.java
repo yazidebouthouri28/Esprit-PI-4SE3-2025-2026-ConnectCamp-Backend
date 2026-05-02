@@ -158,6 +158,9 @@ public class DtoMapper {
                 .sponsorName(entity.getSponsor() != null ? entity.getSponsor().getName() : null)
                 .eventId(entity.getEvent() != null ? entity.getEvent().getId() : null)
                 .eventTitle(entity.getEvent() != null ? entity.getEvent().getTitle() : null)
+                .eventStartDate(entity.getEvent() != null ? entity.getEvent().getStartDate() : null)
+                .eventEndDate(entity.getEvent() != null ? entity.getEvent().getEndDate() : null)
+                .eventLocation(entity.getEvent() != null ? entity.getEvent().getLocation() : null)
                 .sponsorshipType(entity.getSponsorshipType())
                 .sponsorshipLevel(entity.getSponsorshipLevel())
                 .description(entity.getDescription())
@@ -357,20 +360,15 @@ public class DtoMapper {
                 .currentParticipants(entity.getCurrentParticipants())
                 .price(entity.getPrice())
                 .status(entity.getStatus())
-                .images(entity.getImages())
-                .siteId(entity.getSite() != null ? entity.getSite().getId() : null)
-                .siteName(entity.getSite() != null ? entity.getSite().getName() : null)
-                .organizerId(entity.getOrganizer() != null ? entity.getOrganizer().getId() : null)
-                .organizerName(entity.getOrganizer() != null ? entity.getOrganizer().getCompanyName() : null)
+                .images(Hibernate.isInitialized(entity.getImages()) ? entity.getImages() : null)
+                .latitude(entity.getLatitude())
+                .longitude(entity.getLongitude())
+                .siteId(entity.getSite() != null && Hibernate.isInitialized(entity.getSite()) ? entity.getSite().getId() : null)
+                .siteName(entity.getSite() != null && Hibernate.isInitialized(entity.getSite()) ? entity.getSite().getName() : null)
+                .organizerId(entity.getOrganizer() != null && Hibernate.isInitialized(entity.getOrganizer()) ? entity.getOrganizer().getId() : null)
+                .organizerName(entity.getOrganizer() != null && Hibernate.isInitialized(entity.getOrganizer()) ? entity.getOrganizer().getCompanyName() : null)
                 .isFree(entity.getIsFree())
                 .viewCount(entity.getViewCount())
-                .gamifications(entity.getBadges() != null ? entity.getBadges().stream()
-                        .map(b -> GamificationResponse.builder()
-                                .id(b.getId())
-                                .name(b.getName())
-                                .icon(b.getIcon())
-                                .build())
-                        .collect(Collectors.toList()) : Collections.emptyList())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -395,7 +393,6 @@ public class DtoMapper {
         return EventCommentResponse.builder()
                 .id(entity.getId())
                 .content(entity.getContent())
-                .rating(entity.getRating())
                 .eventId(entity.getEvent() != null ? entity.getEvent().getId() : null)
                 .eventTitle(entity.getEvent() != null ? entity.getEvent().getTitle() : null)
                 .userId(entity.getUser() != null ? entity.getUser().getId() : null)
@@ -489,61 +486,6 @@ public class DtoMapper {
                 .build();
     }
 
-    // Badge Mapping
-    public BadgeResponse toBadgeResponse(Badge entity) {
-        if (entity == null)
-            return null;
-        return BadgeResponse.builder()
-                .id(entity.getId())
-                .name(entity.getName())
-                .icon(entity.getIcon())
-                .medalId(entity.getMedal() != null ? entity.getMedal().getId() : null)
-                .medalName(entity.getMedal() != null ? entity.getMedal().getName() : null)
-                .rules(toBadgeRuleResponseList(entity.getRules()))
-                .build();
-    }
-
-    public List<BadgeResponse> toBadgeResponseList(java.util.Collection<Badge> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toBadgeResponse).collect(Collectors.toList());
-    }
-
-    // Medal Mapping
-    public MedalResponse toMedalResponse(Medal entity) {
-        if (entity == null)
-            return null;
-        return MedalResponse.builder()
-                .id(entity.getId())
-                .name(entity.getName())
-                .icon(entity.getIcon())
-                .type(entity.getType())
-                .build();
-    }
-
-    public List<MedalResponse> toMedalResponseList(java.util.Collection<Medal> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toMedalResponse).collect(Collectors.toList());
-    }
-
-    // BadgeRule Mapping
-    public BadgeRuleResponse toBadgeRuleResponse(BadgeRule entity) {
-        if (entity == null)
-            return null;
-        return BadgeRuleResponse.builder()
-                .id(entity.getId())
-                .numero(entity.getNumero())
-                .regle(entity.getRegle())
-                .build();
-    }
-
-    public List<BadgeRuleResponse> toBadgeRuleResponseList(java.util.Collection<BadgeRule> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toBadgeRuleResponse).collect(Collectors.toList());
-    }
-
     // Achievement Mapping
     public AchievementResponse toAchievementResponse(Achievement entity) {
         if (entity == null)
@@ -569,6 +511,59 @@ public class DtoMapper {
         if (entities == null)
             return Collections.emptyList();
         return entities.stream().map(this::toAchievementResponse).collect(Collectors.toList());
+    }
+
+    // Badge / Medal Mapping
+    public BadgeRuleResponse toBadgeRuleResponse(BadgeRule entity) {
+        if (entity == null)
+            return null;
+        return BadgeRuleResponse.builder()
+                .id(entity.getId())
+                .numero(entity.getNumero())
+                .regle(entity.getRegle())
+                .build();
+    }
+
+    public List<BadgeRuleResponse> toBadgeRuleResponseList(java.util.Collection<BadgeRule> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toBadgeRuleResponse).collect(Collectors.toList());
+    }
+
+    public BadgeResponse toBadgeResponse(Badge entity) {
+        if (entity == null)
+            return null;
+        return BadgeResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .icon(entity.getIcon())
+                .medalId(entity.getMedal() != null ? entity.getMedal().getId() : null)
+                .medalName(entity.getMedal() != null ? entity.getMedal().getName() : null)
+                .rules(Hibernate.isInitialized(entity.getRules()) ? toBadgeRuleResponseList(entity.getRules()) : null)
+                .build();
+    }
+
+    public List<BadgeResponse> toBadgeResponseList(List<Badge> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toBadgeResponse).collect(Collectors.toList());
+    }
+
+    public MedalResponse toMedalResponse(Medal entity) {
+        if (entity == null)
+            return null;
+        return MedalResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .icon(entity.getIcon())
+                .type(entity.getType())
+                .build();
+    }
+
+    public List<MedalResponse> toMedalResponseList(List<Medal> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toMedalResponse).collect(Collectors.toList());
     }
 
     // Order Mapping
