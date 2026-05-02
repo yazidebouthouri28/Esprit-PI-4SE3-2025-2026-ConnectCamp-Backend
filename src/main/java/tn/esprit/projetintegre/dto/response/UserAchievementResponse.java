@@ -15,6 +15,7 @@ public class UserAchievementResponse {
     private Long achievementId;
     private String achievementName;
     private String achievementBadge;
+    private String achievementIcon;
     private String achievementDescription;
     private Integer rewardPoints;
     private Boolean isDisplayed;

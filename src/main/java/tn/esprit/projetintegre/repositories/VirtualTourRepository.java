@@ -8,9 +8,14 @@ import org.springframework.stereotype.Repository;
 import tn.esprit.projetintegre.entities.VirtualTour;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface VirtualTourRepository extends JpaRepository<VirtualTour, Long> {
+
+    @Override
+    @EntityGraph(attributePaths = {"site"})
+    Optional<VirtualTour> findById(Long id);
 
     @EntityGraph(attributePaths = {"site"})
     List<VirtualTour> findBySiteId(Long siteId);

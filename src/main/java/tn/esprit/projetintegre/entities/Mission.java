@@ -2,9 +2,6 @@ package tn.esprit.projetintegre.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import tn.esprit.projetintegre.enums.MissionType;
 
@@ -32,9 +29,7 @@ public class Mission {
     @Enumerated(EnumType.STRING)
     private MissionType type;
 
-    @Positive(message = "La valeur cible doit être supérieure à 0")
     private Integer targetValue; // ex: buy 5 products, attend 3 events
-    @PositiveOrZero(message = "Les points de récompense ne peuvent pas être négatifs")
     private Integer rewardPoints;
 
     private String rewardBadge;
@@ -46,7 +41,6 @@ public class Mission {
     private Boolean isActive = true;
     private Boolean isRepeatable = false;
 
-    @NotBlank(message = "La catégorie est obligatoire")
     private String category; // SHOPPING, EVENTS, SOCIAL, etc.
 
     private LocalDateTime createdAt;

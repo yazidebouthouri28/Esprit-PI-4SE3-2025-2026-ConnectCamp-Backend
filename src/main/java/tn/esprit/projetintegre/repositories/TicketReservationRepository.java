@@ -27,13 +27,21 @@ public interface TicketReservationRepository extends JpaRepository<TicketReserva
     List<TicketReservation> findByEventId(Long eventId);
 
     @EntityGraph(attributePaths = {"user", "event"})
+    List<TicketReservation> findByEventIdAndStatusIn(Long eventId, List<ReservationStatus> statuses);
+
+    @EntityGraph(attributePaths = {"user", "event"})
     List<TicketReservation> findByStatus(ReservationStatus status);
 
     @EntityGraph(attributePaths = {"user", "event"})
     List<TicketReservation> findByUserIdAndStatus(Long userId, ReservationStatus status);
 
+    @EntityGraph(attributePaths = {"user", "event"})
+    List<TicketReservation> findByUserIdAndStatusIn(Long userId, List<ReservationStatus> statuses);
+
     boolean existsByReservationCode(String code);
 
     @EntityGraph(attributePaths = {"user", "event"})
     Optional<TicketReservation> findById(Long id);
+
+    void deleteByEventId(Long eventId);
 }

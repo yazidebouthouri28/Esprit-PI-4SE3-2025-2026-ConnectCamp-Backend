@@ -98,15 +98,15 @@ public class ReservationService {
 
     @Transactional
     public Reservation createEventReservation(Long userId, Long eventId, String guestName,
-            String guestEmail, String guestPhone) {
+            String guestEmail, String guestPhone, int quantity) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
         if (event.getMaxParticipants() != null &&
-                event.getCurrentParticipants() >= event.getMaxParticipants()) {
-            throw new IllegalStateException("Event is fully booked");
+                event.getCurrentParticipants() + quantity > event.getMaxParticipants()) {
+            throw new IllegalStateException("Event does not have enough slots available");
         }
 
         Reservation reservation = Reservation.builder()
@@ -114,8 +114,9 @@ public class ReservationService {
                 .event(event)
                 .checkInDate(event.getEndDate())
                 .checkOutDate(event.getEndDate())
-                .numberOfGuests(1)
-                .totalPrice(event.getIsFree() ? BigDecimal.ZERO : event.getPrice())
+                .numberOfGuests(quantity)
+                .totalPrice(
+                        event.getIsFree() ? BigDecimal.ZERO : event.getPrice().multiply(BigDecimal.valueOf(quantity)))
                 .status(ReservationStatus.PENDING)
                 .paymentStatus(event.getIsFree() ? PaymentStatus.COMPLETED : PaymentStatus.PENDING)
                 .guestName(guestName)
@@ -126,7 +127,7 @@ public class ReservationService {
         reservation = reservationRepository.save(reservation);
 
         // Update event participant count
-        event.setCurrentParticipants(event.getCurrentParticipants() + 1);
+        event.setCurrentParticipants(event.getCurrentParticipants() + quantity);
         eventRepository.save(event);
 
         return reservation;
@@ -150,7 +151,7 @@ public class ReservationService {
         // If event reservation, decrease participant count
         if (reservation.getEvent() != null) {
             Event event = reservation.getEvent();
-            event.setCurrentParticipants(event.getCurrentParticipants() - 1);
+            event.setCurrentParticipants(event.getCurrentParticipants() - reservation.getNumberOfGuests());
             eventRepository.save(event);
         }
 

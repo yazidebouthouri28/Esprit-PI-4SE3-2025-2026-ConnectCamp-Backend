@@ -1,8 +1,10 @@
 package tn.esprit.projetintegre.mapper;
 
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Component;
 import tn.esprit.projetintegre.dto.response.*;
 import tn.esprit.projetintegre.entities.*;
+import tn.esprit.projetintegre.enums.SponsorTier;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,6 +22,7 @@ public class DtoMapper {
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .slug(entity.getSlug())
+                .icon(null)
                 .image(entity.getImage())
                 .parentId(entity.getParent() != null ? entity.getParent().getId() : null)
                 .parentName(entity.getParent() != null ? entity.getParent().getName() : null)
@@ -108,7 +111,7 @@ public class DtoMapper {
         return entities.stream().map(this::toMissionResponse).collect(Collectors.toList());
     }
 
-    // UserMission Mapping
+    // --- UserMission Mapping (complétée) ---
     public UserMissionResponse toUserMissionResponse(UserMission entity) {
         if (entity == null)
             return null;
@@ -128,12 +131,6 @@ public class DtoMapper {
                 .build();
     }
 
-    public List<UserMissionResponse> toUserMissionResponseList(List<UserMission> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toUserMissionResponse).collect(Collectors.toList());
-    }
-
     // Notification Mapping
     public NotificationResponse toNotificationResponse(Notification entity) {
         if (entity == null)
@@ -147,13 +144,8 @@ public class DtoMapper {
                 .isRead(entity.getIsRead())
                 .actionUrl(entity.getActionUrl())
                 .createdAt(entity.getCreatedAt())
-                .build();
-    }
 
-    public List<NotificationResponse> toNotificationResponseList(List<Notification> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toNotificationResponse).collect(Collectors.toList());
+                .build();
     }
 
     // Sponsorship Mapping
@@ -165,7 +157,7 @@ public class DtoMapper {
                 .sponsorId(entity.getSponsor() != null ? entity.getSponsor().getId() : null)
                 .sponsorName(entity.getSponsor() != null ? entity.getSponsor().getName() : null)
                 .eventId(entity.getEvent() != null ? entity.getEvent().getId() : null)
-                .eventTitle(entity.getEvent() != null ? entity.getEvent().getDescription() : null)
+                .eventTitle(entity.getEvent() != null ? entity.getEvent().getTitle() : null)
                 .sponsorshipType(entity.getSponsorshipType())
                 .sponsorshipLevel(entity.getSponsorshipLevel())
                 .description(entity.getDescription())
@@ -200,14 +192,17 @@ public class DtoMapper {
                 .userId(entity.getUser() != null ? entity.getUser().getId() : null)
                 .userName(entity.getUser() != null ? entity.getUser().getName() : null)
                 .planName(entity.getPlanName())
-                .planDescription(entity.getPlanType())
+                .planDescription(entity.getPlanType()) // planType de l'entité -> planDescription du DTO
                 .price(entity.getPrice())
-                .billingCycle(entity.getPlanType())
+                .billingCycle(entity.getPlanType()) // planType de l'entité -> billingCycle du DTO
                 .status(entity.getStatus())
                 .startDate(entity.getStartDate())
                 .endDate(entity.getEndDate())
-                .nextBillingDate(entity.getRenewalDate())
+                .nextBillingDate(entity.getRenewalDate()) // renewalDate de l'entité -> nextBillingDate du DTO
                 .autoRenew(entity.getAutoRenew())
+                .isTrial(false) // Champ non présent dans l'entité
+                .trialEndDate(null) // Champ non présent dans l'entité
+                .cancelledAt(null) // Champ non présent dans l'entité
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
@@ -219,6 +214,7 @@ public class DtoMapper {
     }
 
     // Transaction Mapping
+    // Transaction Mapping (corrigée)
     public TransactionResponse toTransactionResponse(Transaction entity) {
         if (entity == null)
             return null;
@@ -236,6 +232,7 @@ public class DtoMapper {
                         ? entity.getWallet().getUser().getId()
                         : null)
                 .createdAt(entity.getCreatedAt())
+                // Supprimé car absent du DTO
                 .build();
     }
 
@@ -243,6 +240,13 @@ public class DtoMapper {
         if (entities == null)
             return Collections.emptyList();
         return entities.stream().map(this::toTransactionResponse).collect(Collectors.toList());
+    }
+
+    // Wallet Mapping (complétée)
+    public List<WalletResponse> toWalletResponseList(List<Wallet> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toWalletResponse).collect(Collectors.toList());
     }
 
     // Wishlist Mapping
@@ -266,6 +270,45 @@ public class DtoMapper {
         return entities.stream().map(this::toWishlistResponse).collect(Collectors.toList());
     }
 
+    // Ticket Mapping (complété)
+    public List<TicketResponse> toTicketResponseList(List<Ticket> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toTicketResponse).collect(Collectors.toList());
+    }
+
+    // Ticket Mapping
+    public TicketResponse toTicketResponse(Ticket entity) {
+        if (entity == null)
+            return null;
+        return TicketResponse.builder()
+                .id(entity.getId())
+                .ticketNumber(entity.getTicketNumber())
+                .ticketType(entity.getTicketType())
+                .price(entity.getPrice())
+                .status(entity.getStatus()) // Utilise l'enum TicketStatus
+                .eventId(entity.getEvent() != null ? entity.getEvent().getId() : null)
+                .eventTitle(entity.getEvent() != null ? entity.getEvent().getTitle() : null)
+                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
+                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
+                .usedAt(entity.getUsedAt())
+                .createdAt(entity.getCreatedAt())
+                .purchasedAt(entity.getCreatedAt()) // Souvent identique à createdAt si pas de champ spécifique
+                .build();
+    }
+
+    public List<NotificationResponse> toNotificationResponseList(List<Notification> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toNotificationResponse).collect(Collectors.toList());
+    }
+
+    public List<UserMissionResponse> toUserMissionResponseList(List<UserMission> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toUserMissionResponse).collect(Collectors.toList());
+    }
+
     // Coupon Mapping
     public CouponResponse toCouponResponse(Coupon entity) {
         if (entity == null)
@@ -276,13 +319,13 @@ public class DtoMapper {
                 .description(entity.getDescription())
                 .discountType(entity.getType() != null ? entity.getType().name() : null)
                 .discountValue(entity.getDiscountValue())
-                .minOrderAmount(entity.getMinOrderAmount())
+                .minOrderAmount(entity.getMinOrderAmount()) // Corrigé
                 .maxDiscountAmount(entity.getMaxDiscountAmount())
-                .usageLimit(entity.getUsageLimit())
-                .currentUsage(entity.getUsageCount())
+                .usageLimit(entity.getUsageLimit()) // Corrigé
+                .currentUsage(entity.getUsageCount()) // Corrigé
                 .usageLimitPerUser(entity.getUsageLimitPerUser())
-                .validFrom(entity.getValidFrom())
-                .validUntil(entity.getValidUntil())
+                .validFrom(entity.getValidFrom()) // Corrigé
+                .validUntil(entity.getValidUntil()) // Corrigé
                 .isActive(entity.getIsActive())
                 .isValid(entity.isValid())
                 .applicableCategoryId(
@@ -297,17 +340,17 @@ public class DtoMapper {
         return entities.stream().map(this::toCouponResponse).collect(Collectors.toList());
     }
 
-    // Event Mapping (Enum Fix Included)
+    // Event Mapping
     public EventResponse toEventResponse(Event entity) {
         if (entity == null)
             return null;
         return EventResponse.builder()
                 .id(entity.getId())
-                .name(entity.getName())
-                .picture(entity.getPicture())
+                .title(entity.getTitle())
                 .description(entity.getDescription())
                 .category(entity.getCategory())
                 .eventType(entity.getEventType())
+                .startDate(entity.getStartDate())
                 .endDate(entity.getEndDate())
                 .location(entity.getLocation())
                 .maxParticipants(entity.getMaxParticipants())
@@ -319,14 +362,17 @@ public class DtoMapper {
                 .siteName(entity.getSite() != null ? entity.getSite().getName() : null)
                 .organizerId(entity.getOrganizer() != null ? entity.getOrganizer().getId() : null)
                 .organizerName(entity.getOrganizer() != null ? entity.getOrganizer().getCompanyName() : null)
-                .organizerUserId(entity.getOrganizer() != null && entity.getOrganizer().getUser() != null
-                        ? entity.getOrganizer().getUser().getId()
-                        : null)
-                .likesCount(entity.getLikesCount())
-                .dislikesCount(entity.getDislikesCount())
-                .rating(entity.getRating())
                 .isFree(entity.getIsFree())
+                .viewCount(entity.getViewCount())
+                .gamifications(entity.getBadges() != null ? entity.getBadges().stream()
+                        .map(b -> GamificationResponse.builder()
+                                .id(b.getId())
+                                .name(b.getName())
+                                .icon(b.getIcon())
+                                .build())
+                        .collect(Collectors.toList()) : Collections.emptyList())
                 .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
                 .build();
     }
 
@@ -334,6 +380,80 @@ public class DtoMapper {
         if (entities == null)
             return Collections.emptyList();
         return entities.stream().map(this::toEventResponse).collect(Collectors.toList());
+    }
+
+    public EventCommentResponse toEventCommentResponse(EventComment entity) {
+        if (entity == null)
+            return null;
+        String userName = null;
+        if (entity.getUser() != null) {
+            userName = entity.getUser().getName() != null && !entity.getUser().getName().isBlank()
+                    ? entity.getUser().getName()
+                    : entity.getUser().getUsername();
+        }
+
+        return EventCommentResponse.builder()
+                .id(entity.getId())
+                .content(entity.getContent())
+                .rating(entity.getRating())
+                .eventId(entity.getEvent() != null ? entity.getEvent().getId() : null)
+                .eventTitle(entity.getEvent() != null ? entity.getEvent().getTitle() : null)
+                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
+                .userName(userName)
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    public List<EventCommentResponse> toEventCommentResponseList(List<EventComment> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toEventCommentResponse).collect(Collectors.toList());
+    }
+
+    public InventoryResponse toInventoryResponse(Inventory entity) {
+        if (entity == null)
+            return null;
+
+        Integer quantity = entity.getQuantity() != null ? entity.getQuantity() : 0;
+        Integer reservedQuantity = entity.getReservedQuantity() != null ? entity.getReservedQuantity() : 0;
+        Integer availableQuantity = entity.getAvailableQuantity() != null
+                ? entity.getAvailableQuantity()
+                : quantity - reservedQuantity;
+        boolean isLowStock = entity.getLowStockThreshold() != null
+                && availableQuantity <= entity.getLowStockThreshold();
+
+        return InventoryResponse.builder()
+                .id(entity.getId())
+                .sku(entity.getSku())
+                .quantity(quantity)
+                .reservedQuantity(reservedQuantity)
+                .availableQuantity(availableQuantity)
+                .lowStockThreshold(entity.getLowStockThreshold())
+                .safetyStock(entity.getSafetyStock())
+                .reorderQuantity(entity.getReorderQuantity())
+                .location(entity.getLocation())
+                .aisle(entity.getAisle())
+                .shelf(entity.getShelf())
+                .bin(entity.getBin())
+                .lastStockCheck(entity.getLastStockCheck())
+                .lastRestocked(entity.getLastRestocked())
+                .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
+                .productName(entity.getProduct() != null ? entity.getProduct().getName() : null)
+                .variantId(entity.getVariant() != null ? entity.getVariant().getId() : null)
+                .variantName(entity.getVariant() != null ? entity.getVariant().getName() : null)
+                .warehouseId(entity.getWarehouse() != null ? entity.getWarehouse().getId() : null)
+                .warehouseName(entity.getWarehouse() != null ? entity.getWarehouse().getName() : null)
+                .isLowStock(isLowStock)
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    public List<InventoryResponse> toInventoryResponseList(List<Inventory> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toInventoryResponse).collect(Collectors.toList());
     }
 
     // Site Mapping
@@ -357,6 +477,9 @@ public class DtoMapper {
                 .contactPhone(entity.getContactPhone())
                 .contactEmail(entity.getContactEmail())
                 .isActive(entity.getIsActive())
+                .checkInTime(entity.getCheckInTime())
+                .checkOutTime(entity.getCheckOutTime())
+                .houseRules(entity.getHouseRules())
                 .rating(entity.getRating())
                 .reviewCount(entity.getReviewCount())
                 .ownerId(entity.getOwner() != null ? entity.getOwner().getId() : null)
@@ -366,10 +489,59 @@ public class DtoMapper {
                 .build();
     }
 
-    public List<SiteResponse> toSiteResponseList(List<Site> entities) {
+    // Badge Mapping
+    public BadgeResponse toBadgeResponse(Badge entity) {
+        if (entity == null)
+            return null;
+        return BadgeResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .icon(entity.getIcon())
+                .medalId(entity.getMedal() != null ? entity.getMedal().getId() : null)
+                .medalName(entity.getMedal() != null ? entity.getMedal().getName() : null)
+                .rules(toBadgeRuleResponseList(entity.getRules()))
+                .build();
+    }
+
+    public List<BadgeResponse> toBadgeResponseList(java.util.Collection<Badge> entities) {
         if (entities == null)
             return Collections.emptyList();
-        return entities.stream().map(this::toSiteResponse).collect(Collectors.toList());
+        return entities.stream().map(this::toBadgeResponse).collect(Collectors.toList());
+    }
+
+    // Medal Mapping
+    public MedalResponse toMedalResponse(Medal entity) {
+        if (entity == null)
+            return null;
+        return MedalResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .icon(entity.getIcon())
+                .type(entity.getType())
+                .build();
+    }
+
+    public List<MedalResponse> toMedalResponseList(java.util.Collection<Medal> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toMedalResponse).collect(Collectors.toList());
+    }
+
+    // BadgeRule Mapping
+    public BadgeRuleResponse toBadgeRuleResponse(BadgeRule entity) {
+        if (entity == null)
+            return null;
+        return BadgeRuleResponse.builder()
+                .id(entity.getId())
+                .numero(entity.getNumero())
+                .regle(entity.getRegle())
+                .build();
+    }
+
+    public List<BadgeRuleResponse> toBadgeRuleResponseList(java.util.Collection<BadgeRule> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toBadgeRuleResponse).collect(Collectors.toList());
     }
 
     // Achievement Mapping
@@ -392,10 +564,197 @@ public class DtoMapper {
                 .build();
     }
 
+    // Liste de Achievement
     public List<AchievementResponse> toAchievementResponseList(List<Achievement> entities) {
         if (entities == null)
             return Collections.emptyList();
         return entities.stream().map(this::toAchievementResponse).collect(Collectors.toList());
+    }
+
+    // Order Mapping
+    public OrderResponse toOrderResponse(Order entity) {
+        if (entity == null)
+            return null;
+        return OrderResponse.builder()
+                .id(entity.getId())
+                .orderNumber(entity.getOrderNumber())
+                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
+                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
+                .totalPrice(entity.getTotalAmount()) // Utilise totalAmount de l'entité pour totalPrice du DTO
+                .subtotal(entity.getSubtotal())
+                .discountAmount(entity.getDiscountAmount())
+                .taxAmount(entity.getTaxAmount())
+                .shippingCost(entity.getShippingCost())
+                .totalAmount(entity.getTotalAmount())
+                .status(entity.getStatus())
+                .paymentStatus(entity.getPaymentStatus())
+                .paymentMethod(entity.getPaymentMethod())
+                .shippingAddress(entity.getShippingAddress())
+                .shippingCity(entity.getShippingCity())
+                .shippingCountry(entity.getShippingCountry())
+                .shippingPhone(entity.getShippingPhone())
+                .notes(entity.getNotes())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .deliveredAt(entity.getDeliveredAt())
+                .build();
+    }
+
+    // Promotion Mapping
+    public PromotionResponse toPromotionResponse(Promotion entity) {
+        if (entity == null)
+            return null;
+        return PromotionResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .type(entity.getType())
+                .discountValue(entity.getDiscountValue())
+                .minPurchaseAmount(entity.getMinPurchaseAmount())
+                .maxDiscountAmount(entity.getMaxDiscountAmount())
+                .maxUsage(entity.getMaxUsage())
+                .currentUsage(entity.getCurrentUsage())
+                .startDate(entity.getStartDate())
+                .endDate(entity.getEndDate())
+                .isActive(entity.getIsActive())
+                .applicableProductIds(entity.getApplicableProductIds())
+                .applicableCategoryIds(entity.getApplicableCategoryIds())
+                .targetAudience(entity.getTargetAudience())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    public List<PromotionResponse> toPromotionResponseList(List<Promotion> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toPromotionResponse).collect(Collectors.toList());
+    }
+
+    // Reservation Mapping
+
+    // Reservation Mapping
+    public ReservationResponse toReservationResponse(Reservation entity) {
+        if (entity == null)
+            return null;
+        return ReservationResponse.builder()
+                .id(entity.getId())
+                .reservationNumber(entity.getReservationNumber())
+                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
+                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
+                .siteId(entity.getSite() != null ? entity.getSite().getId() : null)
+                .siteName(entity.getSite() != null ? entity.getSite().getName() : null)
+                // Conversion LocalDateTime vers LocalDate pour le DTO
+                .checkInDate(entity.getCheckInDate() != null ? entity.getCheckInDate().toLocalDate() : null)
+                .checkOutDate(entity.getCheckOutDate() != null ? entity.getCheckOutDate().toLocalDate() : null)
+                .numberOfNights(entity.getNumberOfNights())
+                .numberOfGuests(entity.getNumberOfGuests())
+                .pricePerNight(entity.getPricePerNight())
+                .totalPrice(entity.getTotalPrice())
+                .status(entity.getStatus())
+                .paymentStatus(entity.getPaymentStatus())
+                .specialRequests(entity.getSpecialRequests())
+                .contactPhone(entity.getGuestPhone()) // Mappé guestPhone vers contactPhone
+                .contactEmail(entity.getGuestEmail()) // Mappé guestEmail vers contactEmail
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    public List<ReservationResponse> toReservationResponseList(List<Reservation> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toReservationResponse).collect(Collectors.toList());
+    }
+
+    // Site Mapping
+    public List<SiteResponse> toSiteResponseList(List<Site> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toSiteResponse).collect(Collectors.toList());
+    }
+
+    // --- Sponsor Mapping ---
+    public SponsorResponse toSponsorResponse(Sponsor entity) {
+        if (entity == null)
+            return null;
+        return SponsorResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .logo(entity.getLogo())
+                .website(entity.getWebsite())
+                .email(entity.getEmail())
+                .phone(entity.getPhone())
+                .address(entity.getAddress())
+                .city(entity.getCity())
+                .country(entity.getCountry())
+                .contactPerson(entity.getContactPerson())
+                .contactPosition(entity.getContactPosition())
+                .notes(entity.getNotes())
+                .tier(entity.getTier() != null ? entity.getTier() : SponsorTier.BRONZE)
+                .isActive(entity.getIsActive())
+                // Note: address, city, country, contactPosition, notes ne sont pas dans
+                // l'entité Sponsor fournie
+                // sponsorshipCount peut être calculé si la relation existe :
+                .sponsorshipCount(entity.getSponsorships() != null && Hibernate.isInitialized(entity.getSponsorships())
+                        ? entity.getSponsorships().size()
+                        : 0)
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    // Sponsor Mapping
+    public List<SponsorResponse> toSponsorResponseList(List<Sponsor> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toSponsorResponse).collect(Collectors.toList());
+    }
+
+    public List<OrderResponse> toOrderResponseList(List<Order> entities) {
+        if (entities == null)
+            return Collections.emptyList();
+        return entities.stream().map(this::toOrderResponse).collect(Collectors.toList());
+    }
+
+    // Cart Mapping
+    public CartResponse toCartResponse(Cart entity) {
+        if (entity == null)
+            return null;
+        return CartResponse.builder()
+                .id(entity.getId())
+                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
+                .items(toCartItemResponseList(entity.getItems()))
+                .totalAmount(entity.getTotalAmount())
+                .discountAmount(entity.getDiscountAmount())
+                .finalAmount(entity.getTotalAmount() != null && entity.getDiscountAmount() != null
+                        ? entity.getTotalAmount().subtract(entity.getDiscountAmount())
+                        : entity.getTotalAmount())
+                .totalItems(entity.getItems() != null ? entity.getItems().size() : 0)
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    public CartItemResponse toCartItemResponse(CartItem entity) {
+        if (entity == null)
+            return null;
+        return CartItemResponse.builder()
+                .id(entity.getId())
+                .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
+                .productName(entity.getProduct() != null ? entity.getProduct().getName() : null)
+                // Correction : productImage devient productThumbnail
+                .productThumbnail(entity.getProduct() != null ? entity.getProduct().getThumbnail() : null)
+                .quantity(entity.getQuantity())
+                // Correction : price devient unitPrice pour correspondre au DTO
+                .unitPrice(entity.getPrice())
+                // Calcul du sous-total
+                .subtotal(entity.getPrice() != null && entity.getQuantity() != null
+                        ? entity.getPrice().multiply(java.math.BigDecimal.valueOf(entity.getQuantity()))
+                        : java.math.BigDecimal.ZERO)
+                // Ajout du stock disponible depuis le produit
+                .stockAvailable(entity.getProduct() != null ? entity.getProduct().getStockQuantity() : 0)
+                .build();
     }
 
     // UserAchievement Mapping
@@ -409,6 +768,7 @@ public class DtoMapper {
                 .achievementId(entity.getAchievement() != null ? entity.getAchievement().getId() : null)
                 .achievementName(entity.getAchievement() != null ? entity.getAchievement().getName() : null)
                 .achievementBadge(entity.getAchievement() != null ? entity.getAchievement().getBadge() : null)
+                .achievementIcon(entity.getAchievement() != null ? entity.getAchievement().getIcon() : null)
                 .achievementDescription(
                         entity.getAchievement() != null ? entity.getAchievement().getDescription() : null)
                 .rewardPoints(entity.getAchievement() != null ? entity.getAchievement().getRewardPoints() : null)
@@ -423,127 +783,10 @@ public class DtoMapper {
         return entities.stream().map(this::toUserAchievementResponse).collect(Collectors.toList());
     }
 
-    // Order Mapping
-    public OrderResponse toOrderResponse(Order entity) {
-        if (entity == null)
-            return null;
-        return OrderResponse.builder()
-                .id(entity.getId())
-                .orderNumber(entity.getOrderNumber())
-                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
-                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
-                .totalAmount(entity.getTotalAmount())
-                .subtotal(entity.getSubtotal())
-                .status(entity.getStatus())
-                .createdAt(entity.getCreatedAt())
-                .build();
-    }
-
-    public List<OrderResponse> toOrderResponseList(List<Order> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toOrderResponse).collect(Collectors.toList());
-    }
-
-    // Promotion Mapping
-    public PromotionResponse toPromotionResponse(Promotion entity) {
-        if (entity == null)
-            return null;
-        return PromotionResponse.builder()
-                .id(entity.getId())
-                .name(entity.getName())
-                .description(entity.getDescription())
-                .type(entity.getType())
-                .discountValue(entity.getDiscountValue())
-                .startDate(entity.getStartDate())
-                .endDate(entity.getEndDate())
-                .isActive(entity.getIsActive())
-                .createdAt(entity.getCreatedAt())
-                .build();
-    }
-
-    public List<PromotionResponse> toPromotionResponseList(List<Promotion> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toPromotionResponse).collect(Collectors.toList());
-    }
-
-    // Reservation Mapping
-    public ReservationResponse toReservationResponse(Reservation entity) {
-        if (entity == null)
-            return null;
-        return ReservationResponse.builder()
-                .id(entity.getId())
-                .reservationNumber(entity.getReservationNumber())
-                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
-                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
-                .siteId(entity.getSite() != null ? entity.getSite().getId() : null)
-                .siteName(entity.getSite() != null ? entity.getSite().getName() : null)
-                .checkInDate(entity.getCheckInDate() != null ? entity.getCheckInDate().toLocalDate() : null)
-                .checkOutDate(entity.getCheckOutDate() != null ? entity.getCheckOutDate().toLocalDate() : null)
-                .totalPrice(entity.getTotalPrice())
-                .status(entity.getStatus())
-                .createdAt(entity.getCreatedAt())
-                .build();
-    }
-
-    public List<ReservationResponse> toReservationResponseList(List<Reservation> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toReservationResponse).collect(Collectors.toList());
-    }
-
-    // Sponsor Mapping
-    public SponsorResponse toSponsorResponse(Sponsor entity) {
-        if (entity == null)
-            return null;
-        return SponsorResponse.builder()
-                .id(entity.getId())
-                .name(entity.getName())
-                .description(entity.getDescription())
-                .logo(entity.getLogo())
-                .isActive(entity.getIsActive())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
-    }
-
-    public List<SponsorResponse> toSponsorResponseList(List<Sponsor> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toSponsorResponse).collect(Collectors.toList());
-    }
-
-    // Cart Mapping
-    public CartResponse toCartResponse(Cart entity) {
-        if (entity == null)
-            return null;
-        return CartResponse.builder()
-                .id(entity.getId())
-                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
-                .items(toCartItemResponseList(entity.getItems()))
-                .totalAmount(entity.getTotalAmount())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
-    }
-
-    public CartItemResponse toCartItemResponse(CartItem entity) {
-        if (entity == null)
-            return null;
-        return CartItemResponse.builder()
-                .id(entity.getId())
-                .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
-                .productName(entity.getProduct() != null ? entity.getProduct().getName() : null)
-                .productThumbnail(entity.getProduct() != null ? entity.getProduct().getThumbnail() : null)
-                .quantity(entity.getQuantity())
-                .unitPrice(entity.getPrice())
-                .build();
-    }
-
     public List<CartItemResponse> toCartItemResponseList(List<CartItem> entities) {
         if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toCartItemResponse).collect(Collectors.toList());
+            return java.util.Collections.emptyList();
+        return entities.stream().map(this::toCartItemResponse).collect(java.util.stream.Collectors.toList());
     }
 
     // CampingService Mapping
@@ -556,9 +799,20 @@ public class DtoMapper {
                 .description(entity.getDescription())
                 .type(entity.getType())
                 .price(entity.getPrice())
+                .pricingUnit(entity.getPricingUnit())
+                .images(entity.getImages())
                 .isActive(entity.getIsActive())
+                .isAvailable(entity.getIsAvailable())
+                .maxCapacity(entity.getMaxCapacity())
+                .duration(entity.getDuration())
+                .rating(entity.getRating())
+                .reviewCount(entity.getReviewCount())
+                .providerId(entity.getProvider() != null ? entity.getProvider().getId() : null)
+                .providerName(entity.getProvider() != null ? entity.getProvider().getName() : null)
                 .siteId(entity.getSite() != null ? entity.getSite().getId() : null)
+                .siteName(entity.getSite() != null ? entity.getSite().getName() : null)
                 .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
                 .build();
     }
 
@@ -581,8 +835,15 @@ public class DtoMapper {
                 .status(entity.getStatus())
                 .latitude(entity.getLatitude())
                 .longitude(entity.getLongitude())
+                .location(entity.getLocation())
+                .reportedById(entity.getReportedBy() != null ? entity.getReportedBy().getId() : null)
+                .reportedByName(entity.getReportedBy() != null ? entity.getReportedBy().getName() : null)
                 .siteId(entity.getSite() != null ? entity.getSite().getId() : null)
                 .siteName(entity.getSite() != null ? entity.getSite().getName() : null)
+                .resolvedById(entity.getResolvedBy() != null ? entity.getResolvedBy().getId() : null)
+                .resolvedByName(entity.getResolvedBy() != null ? entity.getResolvedBy().getName() : null)
+                .resolutionNotes(entity.getResolutionNotes())
+                .resolvedAt(entity.getResolvedAt())
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
@@ -606,112 +867,6 @@ public class DtoMapper {
                 .isActive(entity.getIsActive())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
-                .build();
-    }
-
-    public List<WalletResponse> toWalletResponseList(List<Wallet> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toWalletResponse).collect(Collectors.toList());
-    }
-
-    // Inventory Mapping
-    public InventoryResponse toInventoryResponse(Inventory entity) {
-        if (entity == null)
-            return null;
-        return InventoryResponse.builder()
-                .id(entity.getId())
-                .sku(entity.getSku())
-                .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
-                .productName(entity.getProduct() != null ? entity.getProduct().getName() : null)
-                .quantity(entity.getQuantity())
-                .availableQuantity(entity.getAvailableQuantity())
-                .createdAt(entity.getCreatedAt())
-                .build();
-    }
-
-    public List<InventoryResponse> toInventoryResponseList(List<Inventory> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toInventoryResponse).collect(Collectors.toList());
-    }
-
-    // EventComment Mapping
-    public EventCommentResponse toEventCommentResponse(EventComment entity) {
-        if (entity == null)
-            return null;
-        return EventCommentResponse.builder()
-                .id(entity.getId())
-                .content(entity.getContent())
-                .eventId(entity.getEvent() != null ? entity.getEvent().getId() : null)
-                .eventTitle(entity.getEvent() != null ? entity.getEvent().getDescription() : null)
-                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
-                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
-    }
-
-    public List<EventCommentResponse> toEventCommentResponseList(List<EventComment> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toEventCommentResponse).collect(Collectors.toList());
-    }
-
-    // Complaint Mapping
-    public ComplaintResponse toComplaintResponse(Complaint entity) {
-        if (entity == null)
-            return null;
-        return ComplaintResponse.builder()
-                .id(entity.getId())
-                .complaintNumber(entity.getComplaintNumber())
-                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
-                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
-                .subject(entity.getSubject())
-                .description(entity.getDescription())
-                .category(entity.getCategory())
-                .status(entity.getStatus())
-                .referenceType(entity.getReferenceType())
-                .referenceId(entity.getReferenceId())
-                .priority(entity.getPriority())
-                .assignedToId(entity.getAssignedTo() != null ? entity.getAssignedTo().getId() : null)
-                .assignedToName(entity.getAssignedTo() != null ? entity.getAssignedTo().getName() : null)
-                .resolution(entity.getResolution())
-                .createdAt(entity.getCreatedAt())
-                .resolvedAt(entity.getResolvedAt())
-                .closedAt(entity.getClosedAt())
-                .build();
-    }
-
-    public List<ComplaintResponse> toComplaintResponseList(List<Complaint> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toComplaintResponse).collect(Collectors.toList());
-    }
-
-    // Ticket Mapping
-    public List<TicketResponse> toTicketResponseList(List<Ticket> entities) {
-        if (entities == null)
-            return Collections.emptyList();
-        return entities.stream().map(this::toTicketResponse).collect(Collectors.toList());
-    }
-
-    public TicketResponse toTicketResponse(Ticket entity) {
-        if (entity == null)
-            return null;
-        return TicketResponse.builder()
-                .id(entity.getId())
-                .ticketNumber(entity.getTicketNumber())
-                .ticketType(entity.getTicketType())
-                .price(entity.getPrice())
-                .status(entity.getStatus())
-                .eventId(entity.getEvent() != null ? entity.getEvent().getId() : null)
-                .eventTitle(entity.getEvent() != null ? entity.getEvent().getDescription() : null)
-                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
-                .userName(entity.getUser() != null ? entity.getUser().getName() : null)
-                .usedAt(entity.getUsedAt())
-                .createdAt(entity.getCreatedAt())
-                .purchasedAt(entity.getCreatedAt())
                 .build();
     }
 }

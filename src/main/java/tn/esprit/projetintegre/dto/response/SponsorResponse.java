@@ -1,6 +1,7 @@
 package tn.esprit.projetintegre.dto.response;
 
 import lombok.*;
+import tn.esprit.projetintegre.enums.SponsorTier;
 
 import java.time.LocalDateTime;
 
@@ -22,6 +23,7 @@ public class SponsorResponse {
     private String contactPerson;
     private String contactPosition;
     private String notes;
+    private SponsorTier tier;
     private Boolean isActive;
     private Integer sponsorshipCount;
     private LocalDateTime createdAt;

@@ -11,7 +11,7 @@ public class InventoryRequest {
     @NotNull(message = "La quantité est obligatoire")
     @Min(value = 0, message = "La quantité doit être positive")
     private Integer quantity;
-    
+
     @Min(value = 0, message = "La quantité réservée doit être positive")
     private Integer reservedQuantity;
     

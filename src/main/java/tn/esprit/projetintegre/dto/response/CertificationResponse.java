@@ -22,6 +22,7 @@ public class CertificationResponse {
     private Integer score;
     private Long userId;
     private String userName;
+    private Long siteId;
     private List<CertificationItemResponse> items;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

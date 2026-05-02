@@ -48,4 +48,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @EntityGraph(attributePaths = {"chatRoom", "sender"})
     @Query("SELECT cm FROM ChatMessage cm WHERE cm.chatRoom.id = :roomId AND LOWER(cm.content) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY cm.createdAt DESC")
     Page<ChatMessage> searchInRoom(@Param("roomId") Long roomId, @Param("keyword") String keyword, Pageable pageable);
+
+    @Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("DELETE FROM ChatMessage c WHERE c.createdAt < :threshold")
+    int deleteOldMessages(@Param("threshold") LocalDateTime threshold);
 }

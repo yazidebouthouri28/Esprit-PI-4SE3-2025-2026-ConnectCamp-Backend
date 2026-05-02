@@ -27,7 +27,7 @@ public class ChatRoom {
     private Long id;
 
     @NotBlank(message = "Le nom du salon est obligatoire")
-    @Size(min = 2, max = 100, message = "Le nom doit contenir entre 2 et 100 caractères")
+    @Size(min = 5, max = 100, message = "Le nom doit contenir entre 2 et 100 caractères")
     @Column(nullable = false, length = 100)
     private String name;
 

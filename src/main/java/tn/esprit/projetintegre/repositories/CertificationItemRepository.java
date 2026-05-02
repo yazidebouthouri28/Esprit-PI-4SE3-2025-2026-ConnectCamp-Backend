@@ -19,4 +19,6 @@ public interface CertificationItemRepository extends JpaRepository<Certification
 
     @EntityGraph(attributePaths = {"certification"})
     List<CertificationItem> findByCertificationIdAndPassed(Long certificationId, Boolean passed);
+
+    List<CertificationItem> findByCertification_Id(Long certificationId);
 }

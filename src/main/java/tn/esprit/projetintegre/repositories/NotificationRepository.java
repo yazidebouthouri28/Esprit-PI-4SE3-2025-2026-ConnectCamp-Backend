@@ -23,10 +23,15 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Page<Notification> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"user"})
-    List<Notification> findByUserIdAndIsReadFalse(Long userId);
+    List<Notification> findByUserIdAndIsReadFalseOrderByCreatedAtDesc(Long userId);
 
-    @EntityGraph(attributePaths = {"user"})
     long countByUserIdAndIsReadFalse(Long userId);
+
+    boolean existsByUserIdAndTypeAndReferenceTypeAndReferenceId(
+            Long userId,
+            String type,
+            String referenceType,
+            Long referenceId);
 
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.user.id = :userId")

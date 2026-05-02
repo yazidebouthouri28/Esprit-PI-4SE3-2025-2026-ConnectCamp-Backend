@@ -51,33 +51,25 @@ public class OrderService {
 
     @Transactional
     public Order createOrderFromCart(Long userId, String shippingName, String shippingPhone,
-                                     String shippingAddress, String shippingCity,
+                                     String shippingAddress, String shippingCity, 
                                      String shippingPostalCode, String shippingCountry,
                                      String paymentMethod, String notes) {
         User user = userService.getUserById(userId);
         Cart cart = cartService.getCartByUserId(userId);
 
-        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+        if (cart.getItems().isEmpty()) {
             throw new IllegalStateException("Cart is empty");
         }
 
+        // Verify stock and create order items
         List<OrderItem> orderItems = new ArrayList<>();
         BigDecimal subtotal = BigDecimal.ZERO;
 
         for (CartItem cartItem : cart.getItems()) {
             Product product = cartItem.getProduct();
-
-            // Null-safe price from cart item
-            BigDecimal itemPrice = cartItem.getPrice() != null
-                    ? cartItem.getPrice()
-                    : product.getPrice();
-
             if (product.getStockQuantity() < cartItem.getQuantity()) {
-                throw new InsufficientStockException(
-                        "Insufficient stock for product: " + product.getName());
+                throw new InsufficientStockException("Insufficient stock for product: " + product.getName());
             }
-
-            BigDecimal lineTotal = itemPrice.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
 
             OrderItem orderItem = OrderItem.builder()
                     .product(product)
@@ -85,37 +77,29 @@ public class OrderService {
                     .productSku(product.getSku())
                     .productThumbnail(product.getThumbnail())
                     .quantity(cartItem.getQuantity())
-                    .unitPrice(itemPrice)
-                    .totalPrice(lineTotal)
+                    .unitPrice(cartItem.getPrice())
+                    .totalPrice(cartItem.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())))
                     .build();
-
             orderItems.add(orderItem);
-            subtotal = subtotal.add(lineTotal);
+            subtotal = subtotal.add(orderItem.getTotalPrice());
 
+            // Reduce stock
             product.setStockQuantity(product.getStockQuantity() - cartItem.getQuantity());
             product.setSalesCount(product.getSalesCount() + cartItem.getQuantity());
             productRepository.save(product);
         }
 
+        // Calculate totals
         BigDecimal shippingCost = calculateShippingCost(subtotal);
-        BigDecimal taxAmount = subtotal.multiply(BigDecimal.valueOf(0.19));
-
-        // ── NULL-SAFE cart fields ──────────────────────────────────────────────
-        BigDecimal discountAmount = cart.getDiscountAmount() != null
-                ? cart.getDiscountAmount()
-                : BigDecimal.ZERO;
-
-        BigDecimal totalAmount = subtotal
-                .add(shippingCost)
-                .add(taxAmount)
-                .subtract(discountAmount);   // safe now
+        BigDecimal taxAmount = subtotal.multiply(BigDecimal.valueOf(0.19)); // 19% tax
+        BigDecimal totalAmount = subtotal.add(shippingCost).add(taxAmount).subtract(cart.getDiscountAmount());
 
         Order order = Order.builder()
                 .user(user)
                 .subtotal(subtotal)
                 .shippingCost(shippingCost)
                 .taxAmount(taxAmount)
-                .discountAmount(discountAmount)
+                .discountAmount(cart.getDiscountAmount())
                 .totalAmount(totalAmount)
                 .status(OrderStatus.PENDING)
                 .paymentStatus(PaymentStatus.PENDING)
@@ -132,19 +116,23 @@ public class OrderService {
 
         order = orderRepository.save(order);
 
+        // Set order reference in items and save
         for (OrderItem item : orderItems) {
             item.setOrder(order);
         }
         order.setItems(orderItems);
         order = orderRepository.save(order);
 
+        // Clear cart
         cartService.clearCart(userId);
 
-        int loyaltyPoints = totalAmount.intValue() / 10;
+        // Add loyalty points
+        int loyaltyPoints = totalAmount.intValue() / 10; // 1 point per 10 TND
         userService.addLoyaltyPoints(userId, loyaltyPoints);
 
         return order;
     }
+
     @Transactional
     public Order updateOrderStatus(Long orderId, OrderStatus status) {
         Order order = getOrderById(orderId);

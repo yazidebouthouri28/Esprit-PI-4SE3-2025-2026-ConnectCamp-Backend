@@ -52,7 +52,8 @@ public class EventCommentController {
         EventComment comment = eventCommentService.createComment(
                 request.getEventId(),
                 request.getUserId(),
-                request.getContent());
+                request.getContent(),
+                request.getRating());
         return ResponseEntity
                 .ok(ApiResponse.success("Comment created successfully", dtoMapper.toEventCommentResponse(comment)));
     }

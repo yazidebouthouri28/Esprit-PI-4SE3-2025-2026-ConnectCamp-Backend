@@ -42,4 +42,6 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
 
     @EntityGraph(attributePaths = {"event", "service"})
     Optional<TimeSlot> findById(Long id);
+
+    void deleteByEventId(Long eventId);
 }

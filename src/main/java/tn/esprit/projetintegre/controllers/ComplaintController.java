@@ -11,8 +11,6 @@ import tn.esprit.projetintegre.dto.ApiResponse;
 import tn.esprit.projetintegre.dto.PageResponse;
 import tn.esprit.projetintegre.entities.Complaint;
 import tn.esprit.projetintegre.enums.ComplaintStatus;
-import tn.esprit.projetintegre.dto.response.ComplaintResponse;
-import tn.esprit.projetintegre.mapper.DtoMapper;
 import tn.esprit.projetintegre.services.ComplaintService;
 
 @RestController
@@ -22,88 +20,81 @@ import tn.esprit.projetintegre.services.ComplaintService;
 public class ComplaintController {
 
     private final ComplaintService complaintService;
-    private final DtoMapper dtoMapper;
 
     @GetMapping
     @Operation(summary = "Get all complaints paginated")
-    public ResponseEntity<ApiResponse<PageResponse<ComplaintResponse>>> getAllComplaints(Pageable pageable) {
-        Page<ComplaintResponse> page = complaintService.getAllComplaints(pageable).map(dtoMapper::toComplaintResponse);
+    public ResponseEntity<ApiResponse<PageResponse<Complaint>>> getAllComplaints(Pageable pageable) {
+        Page<Complaint> page = complaintService.getAllComplaints(pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get complaint by ID")
-    public ResponseEntity<ApiResponse<ComplaintResponse>> getComplaintById(@PathVariable Long id) {
-        return ResponseEntity
-                .ok(ApiResponse.success(dtoMapper.toComplaintResponse(complaintService.getComplaintById(id))));
+    public ResponseEntity<ApiResponse<Complaint>> getComplaintById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(complaintService.getComplaintById(id)));
     }
 
     @GetMapping("/number/{complaintNumber}")
     @Operation(summary = "Get complaint by number")
-    public ResponseEntity<ApiResponse<ComplaintResponse>> getComplaintByNumber(@PathVariable String complaintNumber) {
-        return ResponseEntity.ok(ApiResponse
-                .success(dtoMapper.toComplaintResponse(complaintService.getComplaintByNumber(complaintNumber))));
+    public ResponseEntity<ApiResponse<Complaint>> getComplaintByNumber(@PathVariable String complaintNumber) {
+        return ResponseEntity.ok(ApiResponse.success(complaintService.getComplaintByNumber(complaintNumber)));
     }
 
     @GetMapping("/user/{userId}")
     @Operation(summary = "Get complaints by user ID")
-    public ResponseEntity<ApiResponse<PageResponse<ComplaintResponse>>> getComplaintsByUserId(@PathVariable Long userId,
-            Pageable pageable) {
-        Page<ComplaintResponse> page = complaintService.getComplaintsByUserId(userId, pageable)
-                .map(dtoMapper::toComplaintResponse);
+    public ResponseEntity<ApiResponse<PageResponse<Complaint>>> getComplaintsByUserId(@PathVariable Long userId, Pageable pageable) {
+        Page<Complaint> page = complaintService.getComplaintsByUserId(userId, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 
     @GetMapping("/status/{status}")
     @Operation(summary = "Get complaints by status")
-    public ResponseEntity<ApiResponse<PageResponse<ComplaintResponse>>> getComplaintsByStatus(
-            @PathVariable ComplaintStatus status, Pageable pageable) {
-        Page<ComplaintResponse> page = complaintService.getComplaintsByStatus(status, pageable)
-                .map(dtoMapper::toComplaintResponse);
+    public ResponseEntity<ApiResponse<PageResponse<Complaint>>> getComplaintsByStatus(@PathVariable ComplaintStatus status, Pageable pageable) {
+        Page<Complaint> page = complaintService.getComplaintsByStatus(status, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 
     @PostMapping
     @Operation(summary = "Create a new complaint")
-    public ResponseEntity<ApiResponse<ComplaintResponse>> createComplaint(
+    public ResponseEntity<ApiResponse<Complaint>> createComplaint(
             @RequestBody Complaint complaint,
             @RequestParam Long userId) {
         return ResponseEntity.ok(ApiResponse.success("Complaint created successfully",
-                dtoMapper.toComplaintResponse(complaintService.createComplaint(complaint, userId))));
+                complaintService.createComplaint(complaint, userId)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update a complaint")
-    public ResponseEntity<ApiResponse<ComplaintResponse>> updateComplaint(
+    public ResponseEntity<ApiResponse<Complaint>> updateComplaint(
             @PathVariable Long id,
             @RequestBody Complaint complaintDetails) {
         return ResponseEntity.ok(ApiResponse.success("Complaint updated successfully",
-                dtoMapper.toComplaintResponse(complaintService.updateComplaint(id, complaintDetails))));
+                complaintService.updateComplaint(id, complaintDetails)));
     }
 
     @PutMapping("/{id}/assign")
     @Operation(summary = "Assign complaint to staff")
-    public ResponseEntity<ApiResponse<ComplaintResponse>> assignComplaint(
+    public ResponseEntity<ApiResponse<Complaint>> assignComplaint(
             @PathVariable Long id,
             @RequestParam Long assignedToId) {
         return ResponseEntity.ok(ApiResponse.success("Complaint assigned successfully",
-                dtoMapper.toComplaintResponse(complaintService.assignComplaint(id, assignedToId))));
+                complaintService.assignComplaint(id, assignedToId)));
     }
 
     @PutMapping("/{id}/resolve")
     @Operation(summary = "Resolve a complaint")
-    public ResponseEntity<ApiResponse<ComplaintResponse>> resolveComplaint(
+    public ResponseEntity<ApiResponse<Complaint>> resolveComplaint(
             @PathVariable Long id,
             @RequestParam String resolution) {
         return ResponseEntity.ok(ApiResponse.success("Complaint resolved successfully",
-                dtoMapper.toComplaintResponse(complaintService.resolveComplaint(id, resolution))));
+                complaintService.resolveComplaint(id, resolution)));
     }
 
     @PutMapping("/{id}/close")
     @Operation(summary = "Close a complaint")
-    public ResponseEntity<ApiResponse<ComplaintResponse>> closeComplaint(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Complaint>> closeComplaint(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success("Complaint closed successfully",
-                dtoMapper.toComplaintResponse(complaintService.closeComplaint(id))));
+                complaintService.closeComplaint(id)));
     }
 
     @DeleteMapping("/{id}")

@@ -47,6 +47,7 @@ public class Certification {
 
     @Enumerated(EnumType.STRING)
     @NotNull(message = "Le statut est obligatoire")
+    @Builder.Default
     private CertificationStatus status = CertificationStatus.PENDING;
 
     private String documentUrl;
@@ -59,6 +60,10 @@ public class Certification {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "site_id")
+    private Site site;
 
     @OneToMany(mappedBy = "certification", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

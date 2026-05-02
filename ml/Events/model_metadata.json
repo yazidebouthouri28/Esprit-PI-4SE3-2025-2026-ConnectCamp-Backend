@@ -1,0 +1,21 @@
+{
+  "features": [
+    "category_encoded",
+    "state_encoded",
+    "hour",
+    "month",
+    "day_of_week"
+  ],
+  "categories": [
+    "Technology"
+  ],
+  "states": [
+    "San-Francisco"
+  ],
+  "popularity_labels": {
+    "low": "0-5 participants",
+    "medium": "6-20 participants",
+    "high": "21-50 participants",
+    "very_high": "50+ participants"
+  }
+}

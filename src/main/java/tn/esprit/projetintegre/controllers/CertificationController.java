@@ -50,10 +50,25 @@ public class CertificationController {
         return ResponseEntity.ok(ApiResponse.success(certificationService.getByUserId(userId)));
     }
 
+    @GetMapping("/site/{siteId}")
+    @Operation(summary = "Liste les certifications d'un site")
+    public ResponseEntity<ApiResponse<List<CertificationResponse>>> getBySiteId(@PathVariable Long siteId) {
+        return ResponseEntity.ok(ApiResponse.success(certificationService.getBySiteId(siteId)));
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(summary = "Crée une nouvelle certification")
     public ResponseEntity<ApiResponse<CertificationResponse>> create(@Valid @RequestBody CertificationRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Certification créée avec succès", certificationService.create(request)));
+    }
+
+    @PostMapping("/site/{siteId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @Operation(summary = "Crée une nouvelle certification pour un site")
+    public ResponseEntity<ApiResponse<CertificationResponse>> createForSite(@PathVariable Long siteId, @Valid @RequestBody CertificationRequest request) {
+        request.setSiteId(siteId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Certification créée avec succès", certificationService.create(request)));
     }

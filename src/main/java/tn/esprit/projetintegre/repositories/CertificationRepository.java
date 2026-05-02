@@ -24,6 +24,9 @@ public interface CertificationRepository extends JpaRepository<Certification, Lo
     @EntityGraph(attributePaths = {"user"})
     List<Certification> findByUserId(Long userId);
 
+    @EntityGraph(attributePaths = {"user", "site"})
+    List<Certification> findBySiteId(Long siteId);
+
     @EntityGraph(attributePaths = {"user"})
     Page<Certification> findByUserId(Long userId, Pageable pageable);
 

@@ -8,11 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.projetintegre.entities.Event;
 import tn.esprit.projetintegre.entities.Sponsor;
 import tn.esprit.projetintegre.entities.Sponsorship;
+import tn.esprit.projetintegre.enums.SponsorTier;
 import tn.esprit.projetintegre.exception.DuplicateResourceException;
 import tn.esprit.projetintegre.exception.ResourceNotFoundException;
 import tn.esprit.projetintegre.repositories.EventRepository;
 import tn.esprit.projetintegre.repositories.SponsorRepository;
 import tn.esprit.projetintegre.repositories.SponsorshipRepository;
+import tn.esprit.projetintegre.repositories.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +27,7 @@ public class SponsorService {
     private final SponsorRepository sponsorRepository;
     private final SponsorshipRepository sponsorshipRepository;
     private final EventRepository eventRepository;
+    private final UserRepository userRepository;
 
     // Sponsor methods
     public List<Sponsor> getAllSponsors() {
@@ -70,7 +73,21 @@ public class SponsorService {
         sponsor.setContactPerson(sponsorDetails.getContactPerson());
         sponsor.setContactPosition(sponsorDetails.getContactPosition());
         sponsor.setNotes(sponsorDetails.getNotes());
-        return sponsorRepository.save(sponsor);
+        sponsor.setTier(sponsorDetails.getTier() != null ? sponsorDetails.getTier() : SponsorTier.BRONZE);
+        sponsor.setIsActive(
+                sponsorDetails.getIsActive() != null ? sponsorDetails.getIsActive() : sponsor.getIsActive());
+
+        Sponsor updatedSponsor = sponsorRepository.save(sponsor);
+
+        // Sync logo with user avatar
+        if (sponsor.getEmail() != null && sponsor.getLogo() != null) {
+            userRepository.findByEmail(sponsor.getEmail()).ifPresent(user -> {
+                user.setAvatar(sponsor.getLogo());
+                userRepository.save(user);
+            });
+        }
+
+        return updatedSponsor;
     }
 
     public void deleteSponsor(Long id) {

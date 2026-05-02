@@ -55,15 +55,13 @@ public class EmergencyAlertService {
 
         if (request.getSiteId() != null) {
             Site site = siteRepository.findById(request.getSiteId())
-                    .orElseThrow(
-                            () -> new ResourceNotFoundException("Site non trouvé avec l'ID: " + request.getSiteId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Site non trouvé avec l'ID: " + request.getSiteId()));
             alert.setSite(site);
         }
 
         if (request.getEventId() != null) {
             Event event = eventRepository.findById(request.getEventId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Événement non trouvé avec l'ID: " + request.getEventId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Événement non trouvé avec l'ID: " + request.getEventId()));
             alert.setEvent(event);
         }
 
@@ -141,26 +139,16 @@ public class EmergencyAlertService {
         EmergencyAlert alert = alertRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Alerte non trouvée avec l'ID: " + id));
 
-        if (request.getTitle() != null)
-            alert.setTitle(request.getTitle());
-        if (request.getDescription() != null)
-            alert.setDescription(request.getDescription());
-        if (request.getSeverity() != null)
-            alert.setSeverity(request.getSeverity());
-        if (request.getStatus() != null)
-            alert.setStatus(request.getStatus());
-        if (request.getLocation() != null)
-            alert.setLocation(request.getLocation());
-        if (request.getInstructions() != null)
-            alert.setInstructions(request.getInstructions());
-        if (request.getEmergencyContacts() != null)
-            alert.setEmergencyContacts(request.getEmergencyContacts());
-        if (request.getAffectedPersonsCount() != null)
-            alert.setAffectedPersonsCount(request.getAffectedPersonsCount());
-        if (request.getEvacuationRequired() != null)
-            alert.setEvacuationRequired(request.getEvacuationRequired());
-        if (request.getResolutionNotes() != null)
-            alert.setResolutionNotes(request.getResolutionNotes());
+        if (request.getTitle() != null) alert.setTitle(request.getTitle());
+        if (request.getDescription() != null) alert.setDescription(request.getDescription());
+        if (request.getSeverity() != null) alert.setSeverity(request.getSeverity());
+        if (request.getStatus() != null) alert.setStatus(request.getStatus());
+        if (request.getLocation() != null) alert.setLocation(request.getLocation());
+        if (request.getInstructions() != null) alert.setInstructions(request.getInstructions());
+        if (request.getEmergencyContacts() != null) alert.setEmergencyContacts(request.getEmergencyContacts());
+        if (request.getAffectedPersonsCount() != null) alert.setAffectedPersonsCount(request.getAffectedPersonsCount());
+        if (request.getEvacuationRequired() != null) alert.setEvacuationRequired(request.getEvacuationRequired());
+        if (request.getResolutionNotes() != null) alert.setResolutionNotes(request.getResolutionNotes());
 
         alert = alertRepository.save(alert);
         return toResponse(alert);
@@ -197,7 +185,7 @@ public class EmergencyAlertService {
                 .siteId(alert.getSite() != null ? alert.getSite().getId() : null)
                 .siteName(alert.getSite() != null ? alert.getSite().getName() : null)
                 .eventId(alert.getEvent() != null ? alert.getEvent().getId() : null)
-                .eventTitle(alert.getEvent() != null ? alert.getEvent().getDescription() : null)
+                .eventTitle(alert.getEvent() != null ? alert.getEvent().getTitle() : null)
                 .reportedById(alert.getReportedBy().getId())
                 .reportedByName(alert.getReportedBy().getName())
                 .acknowledgedById(alert.getAcknowledgedBy() != null ? alert.getAcknowledgedBy().getId() : null)

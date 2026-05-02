@@ -11,13 +11,14 @@ import java.util.List;
 
 @Entity
 @Table(name = "products", indexes = {
-        @Index(name = "idx_product_category", columnList = "category_id"),
-        @Index(name = "idx_product_seller", columnList = "seller_id"),
-        @Index(name = "idx_product_active", columnList = "isActive"),
-        @Index(name = "idx_product_price", columnList = "price"),
-        @Index(name = "idx_product_sku", columnList = "sku")
+    @Index(name = "idx_product_category", columnList = "category_id"),
+    @Index(name = "idx_product_seller", columnList = "seller_id"),
+    @Index(name = "idx_product_active", columnList = "isActive"),
+    @Index(name = "idx_product_price", columnList = "price"),
+    @Index(name = "idx_product_sku", columnList = "sku")
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -54,10 +55,10 @@ public class Product {
     @Size(max = 50, message = "Le SKU ne peut pas dépasser 50 caractères")
     @Column(unique = true)
     private String sku;
-
+    
     @Size(max = 50, message = "Le code-barres ne peut pas dépasser 50 caractères")
     private String barcode;
-
+    
     @Size(max = 100, message = "La marque ne peut pas dépasser 100 caractères")
     private String brand;
 
@@ -73,15 +74,15 @@ public class Product {
     @Min(value = 0, message = "La quantité en stock ne peut pas être négative")
     @Builder.Default
     private Integer stockQuantity = 0;
-
+    
     @Min(value = 0, message = "Le niveau de stock minimum ne peut pas être négatif")
     @Builder.Default
     private Integer minStockLevel = 5;
-
+    
     @Min(value = 1, message = "Le niveau de stock maximum doit être au moins 1")
     @Builder.Default
     private Integer maxStockLevel = 1000;
-
+    
     @Builder.Default
     private Boolean trackInventory = true;
 
@@ -99,28 +100,28 @@ public class Product {
     @Column(precision = 3, scale = 2)
     @Builder.Default
     private BigDecimal rating = BigDecimal.ZERO;
-
+    
     @Min(value = 0, message = "Le nombre d'avis ne peut pas être négatif")
     @Builder.Default
     private Integer reviewCount = 0;
-
+    
     @Min(value = 0, message = "Le nombre de ventes ne peut pas être négatif")
     @Builder.Default
     private Integer salesCount = 0;
-
+    
     @Min(value = 0, message = "Le nombre de vues ne peut pas être négatif")
     @Builder.Default
     private Integer viewCount = 0;
 
     @Builder.Default
     private Boolean isActive = true;
-
+    
     @Builder.Default
     private Boolean isFeatured = false;
-
+    
     @Builder.Default
     private Boolean isOnSale = false;
-
+    
     @Builder.Default
     private Boolean isRentable = false;
 
@@ -130,7 +131,7 @@ public class Product {
 
     @DecimalMin(value = "0.00", message = "Le poids ne peut pas être négatif")
     private Double weight;
-
+    
     @Size(max = 100, message = "Les dimensions ne peuvent pas dépasser 100 caractères")
     private String dimensions;
 
@@ -156,121 +157,16 @@ public class Product {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (stockQuantity == null)
-            stockQuantity = 0;
-        if (reviewCount == null)
-            reviewCount = 0;
-        if (salesCount == null)
-            salesCount = 0;
-        if (viewCount == null)
-            viewCount = 0;
-        if (rating == null)
-            rating = BigDecimal.ZERO;
-        if (isActive == null)
-            isActive = true;
+        if (stockQuantity == null) stockQuantity = 0;
+        if (reviewCount == null) reviewCount = 0;
+        if (salesCount == null) salesCount = 0;
+        if (viewCount == null) viewCount = 0;
+        if (rating == null) rating = BigDecimal.ZERO;
+        if (isActive == null) isActive = true;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public BigDecimal getOriginalPrice() {
-        return originalPrice;
-    }
-
-    public BigDecimal getDiscountPercentage() {
-        return discountPercentage;
-    }
-
-    public String getSku() {
-        return sku;
-    }
-
-    public String getBarcode() {
-        return barcode;
-    }
-
-    public String getBrand() {
-        return brand;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public User getSeller() {
-        return seller;
-    }
-
-    public Integer getStockQuantity() {
-        return stockQuantity;
-    }
-
-    public Integer getMinStockLevel() {
-        return minStockLevel;
-    }
-
-    public List<String> getImages() {
-        return images;
-    }
-
-    public String getThumbnail() {
-        return thumbnail;
-    }
-
-    public BigDecimal getRating() {
-        return rating;
-    }
-
-    public Integer getReviewCount() {
-        return reviewCount;
-    }
-
-    public Integer getSalesCount() {
-        return salesCount;
-    }
-
-    public Integer getViewCount() {
-        return viewCount;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public Boolean getIsFeatured() {
-        return isFeatured;
-    }
-
-    public Boolean getIsOnSale() {
-        return isOnSale;
-    }
-
-    public Boolean getIsRentable() {
-        return isRentable;
-    }
-
-    public BigDecimal getRentalPricePerDay() {
-        return rentalPricePerDay;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

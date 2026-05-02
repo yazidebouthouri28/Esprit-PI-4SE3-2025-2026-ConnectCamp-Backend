@@ -31,4 +31,6 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     @EntityGraph(attributePaths = {"event", "user"})
     Optional<Ticket> findById(Long id);
+
+    void deleteByEventId(Long eventId);
 }

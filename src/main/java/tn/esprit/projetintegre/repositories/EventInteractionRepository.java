@@ -3,6 +3,7 @@ package tn.esprit.projetintegre.repositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import tn.esprit.projetintegre.entities.EventInteraction;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -10,4 +11,8 @@ public interface EventInteractionRepository extends JpaRepository<EventInteracti
     Optional<EventInteraction> findByUser_IdAndEvent_Id(Long userId, Long eventId);
 
     long countByEvent_IdAndLiked(Long eventId, Boolean liked);
+
+    long countByEvent_IdAndDisliked(Long eventId, Boolean disliked);
+
+    List<EventInteraction> findByUser_IdAndLikedTrue(Long userId);
 }

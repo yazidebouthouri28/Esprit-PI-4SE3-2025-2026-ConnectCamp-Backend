@@ -27,4 +27,6 @@ public interface EventServiceEntityRepository extends JpaRepository<EventService
 
     @EntityGraph(attributePaths = {"event", "provider"})
     List<EventServiceEntity> findByProviderId(Long userId);
+
+    void deleteByEventId(Long eventId);
 }

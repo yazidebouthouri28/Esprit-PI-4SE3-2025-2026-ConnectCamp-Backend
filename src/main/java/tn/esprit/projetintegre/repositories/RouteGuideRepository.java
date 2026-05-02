@@ -18,6 +18,12 @@ public interface RouteGuideRepository extends JpaRepository<RouteGuide, Long> {
     @EntityGraph(attributePaths = {"virtualTour"})
     List<RouteGuide> findByVirtualTourId(Long virtualTourId);
 
+    @EntityGraph(attributePaths = {"virtualTour", "virtualTour.site"})
+    List<RouteGuide> findByVirtualTour_Site_Id(Long siteId);
+
+    @EntityGraph(attributePaths = {"virtualTour", "virtualTour.site"})
+    List<RouteGuide> findByVirtualTour_Site_CityIgnoreCase(String city);
+
     @EntityGraph(attributePaths = {"virtualTour"})
     List<RouteGuide> findByIsActive(Boolean isActive);
 }

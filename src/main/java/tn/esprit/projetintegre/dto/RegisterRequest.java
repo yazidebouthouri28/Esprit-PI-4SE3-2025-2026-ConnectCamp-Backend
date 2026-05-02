@@ -1,12 +1,8 @@
 package tn.esprit.projetintegre.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import tn.esprit.projetintegre.enums.Role;
 
 @Data
 @Builder
@@ -32,33 +28,7 @@ public class RegisterRequest {
 
     private String phone;
     private String address;
-    private String role; // Role selected during registration
 
-    public String getName() {
-        return name;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public String getRole() {
-        return role;
-    }
+    // New field
+    private Role role;
 }

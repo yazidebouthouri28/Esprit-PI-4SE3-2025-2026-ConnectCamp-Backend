@@ -9,6 +9,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import tn.esprit.projetintegre.enums.Role;
+import tn.esprit.projetintegre.enums.SponsorStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -48,39 +49,51 @@ public class User {
     private String password;
 
     private String phone;
-    
+
     @Column(length = 500)
     private String address;
-    
+
     private String country;
     private Integer age;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private Role role = Role.USER;
 
+    @Enumerated(EnumType.STRING)
+    private SponsorStatus sponsorStatus;
+
+    private LocalDateTime sponsorReviewedAt;
+
+    @Builder.Default
     private Boolean isSeller = false;
+    @Builder.Default
     private Boolean isBuyer = true;
+    @Builder.Default
     private Boolean isAdmin = false;
 
     // Seller specific fields
     private String storeName;
-    
+
     @Column(length = 1000)
     private String storeDescription;
-    
+
     private String storeLogo;
     private String storeBanner;
-    
+
     @Column(precision = 3, scale = 2)
     private BigDecimal sellerRating;
-    
+
+    @Builder.Default
     private Integer sellerReviewCount = 0;
+    @Builder.Default
     private Integer totalSales = 0;
-    
+
+    @Builder.Default
     @Column(precision = 15, scale = 2)
     private BigDecimal totalRevenue = BigDecimal.ZERO;
-    
+
     private Boolean sellerVerified = false;
     private LocalDateTime sellerSince;
 
@@ -93,10 +106,10 @@ public class User {
 
     // Profile fields
     private String avatar;
-    
+
     @Column(length = 500)
     private String bio;
-    
+
     private String location;
     private String website;
 
@@ -115,6 +128,14 @@ public class User {
     private Integer experiencePoints = 0;
     private Integer level = 1;
     private Integer totalMissionsCompleted = 0;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.Set<UserBadge> userBadges = new java.util.HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.Set<UserMedal> userMedals = new java.util.HashSet<>();
 
     @CreatedDate
     @Column(updatable = false)

@@ -8,14 +8,16 @@ import tn.esprit.projetintegre.enums.EventStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "events", indexes = {
         @Index(name = "idx_event_status", columnList = "status"),
         @Index(name = "idx_event_organizer", columnList = "organizer_id"),
         @Index(name = "idx_event_site", columnList = "site_id"),
-        @Index(name = "idx_event_dates", columnList = "endDate"),
+        @Index(name = "idx_event_dates", columnList = "startDate,endDate"),
         @Index(name = "idx_event_category", columnList = "category")
 })
 @Getter
@@ -29,15 +31,12 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Le nom est obligatoire")
-    @Size(max = 200, message = "Le nom ne peut pas dépasser 200 caractères")
-    private String name;
-
-    @Size(max = 500, message = "L'URL de la photo ne peut pas dépasser 500 caractères")
-    private String picture;
+    @NotBlank(message = "Le titre de l'événement est obligatoire")
+    @Size(min = 3, max = 200, message = "Le titre doit contenir entre 3 et 200 caractères")
+    @Column(nullable = false)
+    private String title;
 
     @Column(length = 2000)
-    @NotBlank(message = "La description est obligatoire")
     @Size(max = 2000, message = "La description ne peut pas dépasser 2000 caractères")
     private String description;
 
@@ -50,17 +49,18 @@ public class Event {
     @NotNull(message = "L'organisateur est obligatoire")
     private Organizer organizer;
 
-    @Column(name = "event_type")
-    @NotBlank(message = "Le type d'événement est obligatoire")
+    @Size(max = 100, message = "Le type d'événement ne peut pas dépasser 100 caractères")
     private String eventType;
 
-    @NotBlank(message = "La catégorie est obligatoire")
     @Size(max = 100, message = "La catégorie ne peut pas dépasser 100 caractères")
     private String category;
 
     @Column(nullable = false)
     @Builder.Default
     private EventStatus status = EventStatus.DRAFT;
+
+    @NotNull(message = "La date de début est obligatoire")
+    private LocalDateTime startDate;
 
     @NotNull(message = "La date de fin est obligatoire")
     private LocalDateTime endDate;
@@ -82,18 +82,26 @@ public class Event {
     @Builder.Default
     private Boolean isFree = false;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "event_images", joinColumns = @JoinColumn(name = "event_id"))
-    @Column(name = "image_url")
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<String> images = new ArrayList<>();
+    private List<EventPhoto> eventPhotos = new ArrayList<>();
 
-    @Size(max = 500, message = "L'URL de la miniature ne peut pas dépasser 500 caractères")
-    private String thumbnail;
-
-    @NotBlank(message = "Le lieu est obligatoire")
     @Size(max = 500, message = "Le lieu ne peut pas dépasser 500 caractères")
     private String location;
+
+    @DecimalMin(value = "-90.0", message = "Latitude invalide")
+    @DecimalMax(value = "90.0", message = "Latitude invalide")
+    private Double latitude;
+
+    @DecimalMin(value = "-180.0", message = "Longitude invalide")
+    @DecimalMax(value = "180.0", message = "Longitude invalide")
+    private Double longitude;
+
+    @Builder.Default
+    private Boolean isPublic = true;
+
+    @Builder.Default
+    private Boolean requiresApproval = false;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -101,7 +109,20 @@ public class Event {
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<Reservation> reservations = new ArrayList<>();
+    private List<TicketReservation> ticketReservations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<UserBadge> awardedBadges = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "event_badges", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "badge_id"))
+    @Builder.Default
+    private Set<Badge> badges = new HashSet<>();
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<UserMedal> awardedMedals = new HashSet<>();
 
     @DecimalMin(value = "0.00", message = "La note ne peut pas être négative")
     @DecimalMax(value = "5.00", message = "La note ne peut pas dépasser 5")
@@ -112,45 +133,86 @@ public class Event {
     @Builder.Default
     private Integer reviewCount = 0;
 
-    @Min(value = 0, message = "Le nombre de likes ne peut pas être négatif")
+    @Min(value = 0, message = "Le nombre de vues ne peut pas être négatif")
     @Builder.Default
-    private Integer likesCount = 0;
+    private Integer viewCount = 0;
 
-    @Min(value = 0, message = "Le nombre de dislikes ne peut pas être négatif")
+    @Column(name = "predicted_attendees")
     @Builder.Default
-    private Integer dislikesCount = 0;
+    private Integer predictedAttendees = 0;
+
+    @Column(name = "popularity")
+    private String popularity;
+
+    @Column(name = "suggested_badge")
+    private String suggestedBadge;
+
+    @Column(name = "actual_attendees")
+    @Builder.Default
+    private Integer actualAttendees = 0;
+
+    @Column(name = "awarded_badge")
+    private String awardedBadge;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
         if (status == null)
             status = EventStatus.DRAFT;
         if (currentParticipants == null)
             currentParticipants = 0;
         if (reviewCount == null)
             reviewCount = 0;
-        if (likesCount == null)
-            likesCount = 0;
-        if (dislikesCount == null)
-            dislikesCount = 0;
+        if (viewCount == null)
+            viewCount = 0;
     }
 
-    public Integer getLikesCount() {
-        return likesCount;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
-    public void setLikesCount(Integer likesCount) {
-        this.likesCount = likesCount;
+    @AssertTrue(message = "La date de fin doit être après la date de début")
+    private boolean isEndDateAfterStartDate() {
+        if (startDate == null || endDate == null)
+            return true;
+        return !endDate.isBefore(startDate);
     }
 
-    public Integer getDislikesCount() {
-        return dislikesCount;
+    @AssertTrue(message = "La date limite d'inscription doit être avant la date de début")
+    private boolean isRegistrationDeadlineBeforeStart() {
+        if (registrationDeadline == null || startDate == null)
+            return true;
+        return registrationDeadline.isBefore(startDate);
     }
 
-    public void setDislikesCount(Integer dislikesCount) {
-        this.dislikesCount = dislikesCount;
+    @Transient
+    public List<String> getImages() {
+        if (eventPhotos == null || eventPhotos.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return eventPhotos.stream()
+                .map(EventPhoto::getPhotos)
+                .filter(photo -> photo != null && !photo.isBlank())
+                .toList();
+    }
+
+    public void setImages(List<String> images) {
+        if (eventPhotos == null) {
+            eventPhotos = new ArrayList<>();
+        } else {
+            eventPhotos.clear();
+        }
+        if (images == null) {
+            return;
+        }
+        images.stream()
+                .filter(photo -> photo != null && !photo.isBlank())
+                .forEach(photo -> eventPhotos.add(EventPhoto.builder().event(this).photos(photo).build()));
     }
 }

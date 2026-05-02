@@ -49,23 +49,23 @@ public class ParticipantService {
         participant.setSpecialNeeds(request.getSpecialNeeds());
         participant.setStatus(TicketStatus.RESERVED);
         participant.setCheckedIn(false);
-
+        
         Event event = eventRepository.findById(request.getEventId())
                 .orElseThrow(() -> new ResourceNotFoundException("Événement", "id", request.getEventId()));
         participant.setEvent(event);
-
+        
         if (request.getUserId() != null) {
             User user = userRepository.findById(request.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id", request.getUserId()));
             participant.setUser(user);
         }
-
+        
         if (request.getTicketId() != null) {
             Ticket ticket = ticketRepository.findById(request.getTicketId())
                     .orElseThrow(() -> new ResourceNotFoundException("Ticket", "id", request.getTicketId()));
             participant.setTicket(ticket);
         }
-
+        
         return toResponse(participantRepository.save(participant));
     }
 
@@ -76,7 +76,7 @@ public class ParticipantService {
         participant.setPhone(request.getPhone());
         participant.setNotes(request.getNotes());
         participant.setSpecialNeeds(request.getSpecialNeeds());
-
+        
         return toResponse(participantRepository.save(participant));
     }
 
@@ -120,7 +120,7 @@ public class ParticipantService {
                 .notes(p.getNotes())
                 .specialNeeds(p.getSpecialNeeds())
                 .eventId(p.getEvent().getId())
-                .eventName(p.getEvent().getDescription())
+                .eventName(p.getEvent().getTitle())
                 .userId(p.getUser() != null ? p.getUser().getId() : null)
                 .userName(p.getUser() != null ? p.getUser().getName() : null)
                 .ticketId(p.getTicket() != null ? p.getTicket().getId() : null)

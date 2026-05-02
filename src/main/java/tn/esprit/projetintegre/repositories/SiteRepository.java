@@ -18,8 +18,14 @@ public interface SiteRepository extends JpaRepository<Site, Long> {
     @EntityGraph(attributePaths = {"owner"})
     Optional<Site> findById(Long id);
 
+    /** Listed on public pages: active or legacy rows where isActive was never set (null). */
     @EntityGraph(attributePaths = {"owner"})
-    Page<Site> findByIsActiveTrue(Pageable pageable);
+    @Query("SELECT s FROM Site s WHERE s.isActive IS NULL OR s.isActive = true")
+    Page<Site> findListedActiveSites(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"owner"})
+    @Query("SELECT s FROM Site s WHERE s.isActive IS NULL OR s.isActive = true")
+    List<Site> findListedActiveSites();
 
     @EntityGraph(attributePaths = {"owner"})
     Page<Site> findByOwnerId(Long ownerId, Pageable pageable);
@@ -31,6 +37,6 @@ public interface SiteRepository extends JpaRepository<Site, Long> {
     List<Site> findByType(String type);
 
     @EntityGraph(attributePaths = {"owner"})
-    @Query("SELECT s FROM Site s WHERE s.isActive = true AND (LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(s.city) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    @Query("SELECT s FROM Site s WHERE (s.isActive IS NULL OR s.isActive = true) AND (LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(s.city) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Site> searchSites(String keyword, Pageable pageable);
 }

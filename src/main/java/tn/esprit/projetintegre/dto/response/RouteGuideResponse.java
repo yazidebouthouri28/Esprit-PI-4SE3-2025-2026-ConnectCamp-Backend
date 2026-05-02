@@ -15,4 +15,5 @@ public class RouteGuideResponse {
     private List<Long> sceneOrder;
     private List<String> waypoints;
     private Boolean isActive;
+    private Long virtualTourId;
 }

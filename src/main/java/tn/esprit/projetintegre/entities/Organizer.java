@@ -11,10 +11,14 @@ import java.util.List;
 
 @Entity
 @Table(name = "organizers", indexes = {
-    @Index(name = "idx_organizer_user", columnList = "user_id"),
-    @Index(name = "idx_organizer_company", columnList = "companyName")
+        @Index(name = "idx_organizer_user", columnList = "user_id"),
+        @Index(name = "idx_organizer_company", columnList = "companyName")
 })
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Organizer {
 
     @Id

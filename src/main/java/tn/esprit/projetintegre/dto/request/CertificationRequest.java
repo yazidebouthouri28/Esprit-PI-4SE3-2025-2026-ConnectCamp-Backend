@@ -26,4 +26,5 @@ public class CertificationRequest {
     private String verificationUrl;
     private Integer score;
     private Long userId;
+    private Long siteId;
 }

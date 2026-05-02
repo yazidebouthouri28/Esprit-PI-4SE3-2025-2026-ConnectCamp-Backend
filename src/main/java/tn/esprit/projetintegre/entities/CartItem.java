@@ -45,13 +45,4 @@ public class CartItem {
             price = product.getPrice();
         }
     }
-
-    // Explicit getters to avoid Lombok/annotation-processing issues in stream usage
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
 }

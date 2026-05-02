@@ -50,7 +50,7 @@ public class Scene360 {
     @Builder.Default
     private Integer initialFov = 90;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "scene_hotspots", joinColumns = @JoinColumn(name = "scene_id"))
     @Column(name = "hotspot_data", length = 1000)
     @Builder.Default

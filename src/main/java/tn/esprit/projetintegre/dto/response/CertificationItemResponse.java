@@ -13,4 +13,5 @@ public class CertificationItemResponse {
     private Integer requiredScore;
     private Boolean passed;
     private LocalDateTime completedAt;
+    private Long certificationId;
 }

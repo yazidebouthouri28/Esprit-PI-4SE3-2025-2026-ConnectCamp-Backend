@@ -14,6 +14,8 @@ import tn.esprit.projetintegre.enums.CertificationStatus;
 import tn.esprit.projetintegre.exception.ResourceNotFoundException;
 import tn.esprit.projetintegre.repositories.CertificationRepository;
 import tn.esprit.projetintegre.repositories.UserRepository;
+import tn.esprit.projetintegre.repositories.SiteRepository;
+import tn.esprit.projetintegre.entities.Site;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +28,7 @@ public class CertificationService {
 
     private final CertificationRepository certificationRepository;
     private final UserRepository userRepository;
+    private final SiteRepository siteRepository;
 
     public List<CertificationResponse> getAll() {
         return certificationRepository.findAll().stream()
@@ -47,6 +50,12 @@ public class CertificationService {
                 .collect(Collectors.toList());
     }
 
+    public List<CertificationResponse> getBySiteId(Long siteId) {
+        return certificationRepository.findBySiteId(siteId).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
     public CertificationResponse create(CertificationRequest request) {
         Certification certification = new Certification();
         certification.setCertificationCode("CERT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
@@ -64,6 +73,12 @@ public class CertificationService {
             User user = userRepository.findById(request.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id", request.getUserId()));
             certification.setUser(user);
+        }
+
+        if (request.getSiteId() != null) {
+            Site site = siteRepository.findById(request.getSiteId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Site", "id", request.getSiteId()));
+            certification.setSite(site);
         }
         
         return toResponse(certificationRepository.save(certification));
@@ -116,6 +131,7 @@ public class CertificationService {
                 .score(c.getScore())
                 .userId(c.getUser() != null ? c.getUser().getId() : null)
                 .userName(c.getUser() != null ? c.getUser().getName() : null)
+                .siteId(c.getSite() != null ? c.getSite().getId() : null)
                 .items(c.getItems() != null ? c.getItems().stream()
                         .map(i -> CertificationItemResponse.builder()
                                 .id(i.getId())

@@ -2,8 +2,8 @@ package tn.esprit.projetintegre.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.*;
+import tn.esprit.projetintegre.enums.SponsorTier;
 
 // SponsorRequest.java
 @Data
@@ -25,5 +25,6 @@ public class SponsorRequest {
     private String contactPerson;
     private String contactPosition;
     private String notes;
+    private SponsorTier tier;
     private Boolean isActive;
 }

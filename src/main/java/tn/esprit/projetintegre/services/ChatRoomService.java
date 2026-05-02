@@ -87,12 +87,18 @@ public class ChatRoomService {
             throw new BusinessException("Vous n'êtes pas autorisé à modifier ce salon");
         }
 
-        if (request.getName() != null) room.setName(request.getName());
-        if (request.getDescription() != null) room.setDescription(request.getDescription());
-        if (request.getImage() != null) room.setImage(request.getImage());
-        if (request.getMaxMembers() != null) room.setMaxMembers(request.getMaxMembers());
-        if (request.getIsPublic() != null) room.setIsPublic(request.getIsPublic());
-        if (request.getAllowJoin() != null) room.setAllowJoin(request.getAllowJoin());
+        if (request.getName() != null)
+            room.setName(request.getName());
+        if (request.getDescription() != null)
+            room.setDescription(request.getDescription());
+        if (request.getImage() != null)
+            room.setImage(request.getImage());
+        if (request.getMaxMembers() != null)
+            room.setMaxMembers(request.getMaxMembers());
+        if (request.getIsPublic() != null)
+            room.setIsPublic(request.getIsPublic());
+        if (request.getAllowJoin() != null)
+            room.setAllowJoin(request.getAllowJoin());
 
         room = chatRoomRepository.save(room);
         return toResponse(room);
