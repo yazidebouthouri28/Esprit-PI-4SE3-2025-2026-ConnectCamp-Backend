@@ -10,6 +10,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import tn.esprit.projetintegre.dto.response.EventRevenueDTO;
+import tn.esprit.projetintegre.dto.response.ParticipantResponseDTO;
 import tn.esprit.projetintegre.entities.Event;
 import tn.esprit.projetintegre.entities.Organizer;
 import tn.esprit.projetintegre.entities.Site;
@@ -22,7 +24,6 @@ import tn.esprit.projetintegre.repositories.OrganizerRepository;
 import tn.esprit.projetintegre.repositories.SiteRepository;
 import tn.esprit.projetintegre.repositories.UserRepository;
 import tn.esprit.projetintegre.repositories.BadgeRepository;
-import tn.esprit.projetintegre.repositories.ReservationRepository;
 import tn.esprit.projetintegre.repositories.UserBadgeRepository;
 import tn.esprit.projetintegre.repositories.ParticipantRepository;
 import tn.esprit.projetintegre.repositories.EventCommentRepository;
@@ -35,22 +36,24 @@ import tn.esprit.projetintegre.repositories.EventScheduleItemRepository;
 import tn.esprit.projetintegre.repositories.EventInteractionRepository;
 import tn.esprit.projetintegre.repositories.EventPhotoRepository;
 import tn.esprit.projetintegre.entities.Badge;
-import tn.esprit.projetintegre.entities.Reservation;
-import tn.esprit.projetintegre.entities.UserBadge;
+import tn.esprit.projetintegre.entities.TicketReservation;
+import tn.esprit.projetintegre.entities.EventInteraction;
+import tn.esprit.projetintegre.entities.EventComment;
 import tn.esprit.projetintegre.enums.ReservationStatus;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class EventService {
+    private static final int RECOMMENDATION_LIMIT = 8;
+
     private final OrganizerRepository organizerRepository;
     private final EventRepository eventRepository;
     private final SiteRepository siteRepository;
     private final UserRepository userRepository;
     private final BadgeRepository badgeRepository;
-    private final ReservationRepository reservationRepository;
     private final UserBadgeRepository userBadgeRepository;
     private final ParticipantRepository participantRepository;
     private final EventCommentRepository eventCommentRepository;
@@ -237,43 +240,9 @@ public class EventService {
     public Event updateEventStatus(Long id, EventStatus status, Authentication authentication) {
         Event event = getEventById(id);
         assertOrganizerOwnsEvent(event, authentication);
-
-        EventStatus oldStatus = event.getStatus();
         event.setStatus(status);
 
-        if (status == EventStatus.COMPLETED && oldStatus != EventStatus.COMPLETED) {
-            awardBadgesToParticipants(event);
-        }
-
         return eventRepository.save(event);
-    }
-
-    private void awardBadgesToParticipants(Event event) {
-        // Awards are now handled via UserBadge based on rules or manual assignment.
-        // For now, let's keep it simple and stub it to avoid crashes.
-        List<Reservation> confirmedReservations = reservationRepository.findByEventIdAndStatus(event.getId(),
-                ReservationStatus.CONFIRMED);
-
-        for (Reservation res : confirmedReservations) {
-            User user = res.getUser();
-            if (user != null) {
-                // Award all badges associated with this event category or type
-                List<Badge> relevantBadges = badgeRepository.findAll(); // Simple logic: award all for now, or filter by
-                                                                        // category
-                for (Badge badge : relevantBadges) {
-                    // Check if user already has this badge for this event
-                    if (!userBadgeRepository.existsByUserAndBadgeAndEvent(user, badge, event)) {
-                        UserBadge userBadge = UserBadge.builder()
-                                .user(user)
-                                .badge(badge)
-                                .event(event)
-                                .earnedAt(LocalDateTime.now())
-                                .build();
-                        userBadgeRepository.save(userBadge);
-                    }
-                }
-            }
-        }
     }
 
     @Transactional
@@ -289,21 +258,52 @@ public class EventService {
 
     @Transactional
     public void incrementViewCount(Long id) {
-        Event event = getEventById(id);
-        event.setViewCount(event.getViewCount() + 1);
-        eventRepository.save(event);
+        // Avoid triggering bean-validation on legacy events when only viewCount
+        // changes.
+        // (Event has an @AssertTrue on registrationDeadline/startDate, which can block
+        // reads/refreshes.)
+        eventRepository.incrementViewCount(id);
+    }
+
+    public List<EventRevenueDTO> getRevenueData(Authentication authentication) {
+        if (isAdmin(authentication)) {
+            return eventRepository.getRevenueData();
+        }
+        Organizer org = resolveOrganizer(null, authentication != null ? authentication.getName() : null);
+        return eventRepository.getRevenueDataByOrganizerId(org.getId());
+    }
+
+    public Event getManageableEvent(Long eventId, Authentication authentication) {
+        Event event = getEventById(eventId);
+        assertOrganizerOwnsEvent(event, authentication);
+        return event;
+    }
+
+    public List<ParticipantResponseDTO> getParticipants(Long eventId, Authentication authentication) {
+        getManageableEvent(eventId, authentication);
+
+        List<TicketReservation> reservations = ticketReservationRepository.findByEventIdAndStatusIn(eventId,
+                List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED, ReservationStatus.COMPLETED));
+
+        return reservations.stream().map(r -> ParticipantResponseDTO.builder()
+                .id(r.getId())
+                .registrationDate(r.getCreatedAt())
+                .status(r.getStatus().name())
+                .user(ParticipantResponseDTO.UserInfo.builder()
+                        .id(r.getUser().getId())
+                        .name(r.getUser().getName())
+                        .email(r.getUser().getEmail())
+                        .phone(r.getUser().getPhone())
+                        .username(r.getUser().getUsername())
+                        .build())
+                .build()).toList();
     }
 
     @Transactional
     public void deleteEvent(Long id, Authentication authentication) {
         Event event = getEventById(id);
         assertOrganizerOwnsEvent(event, authentication);
-        if (isAdmin(authentication)) {
-            hardDeleteEvent(event);
-            return;
-        }
-        event.setStatus(EventStatus.CANCELLED);
-        eventRepository.save(event);
+        hardDeleteEvent(event);
     }
 
     @Transactional
@@ -311,14 +311,7 @@ public class EventService {
         List<Event> events = eventRepository.findAllById(ids);
         for (Event event : events) {
             assertOrganizerOwnsEvent(event, authentication);
-            if (isAdmin(authentication)) {
-                hardDeleteEvent(event);
-            } else {
-                event.setStatus(EventStatus.CANCELLED);
-            }
-        }
-        if (!isAdmin(authentication)) {
-            eventRepository.saveAll(events);
+            hardDeleteEvent(event);
         }
     }
 
@@ -335,7 +328,7 @@ public class EventService {
     }
 
     public Integer getDislikesCount(Long eventId) {
-        return Math.toIntExact(eventInteractionRepository.countByEvent_IdAndLiked(eventId, false));
+        return Math.toIntExact(eventInteractionRepository.countByEvent_IdAndDisliked(eventId, true));
     }
 
     private void hardDeleteEvent(Event event) {
@@ -343,7 +336,6 @@ public class EventService {
         // Delete dependent rows first to satisfy FK constraints.
         userBadgeRepository.deleteByEventId(eventId);
         participantRepository.deleteByEventId(eventId);
-        reservationRepository.deleteByEventId(eventId);
         eventCommentRepository.deleteByEventId(eventId);
         ticketReservationRepository.deleteByEventId(eventId);
         ticketRequestRepository.deleteByEventId(eventId);
@@ -353,5 +345,80 @@ public class EventService {
         eventScheduleItemRepository.deleteByEventId(eventId);
         eventPhotoRepository.deleteByEventId(eventId);
         eventRepository.deleteById(eventId);
+    }
+
+    /**
+     * Personalized recommendations based on user interactions:
+     * - Liked events → same category / same organizer
+     * - Highly rated events (≥3 stars) → same category / same organizer
+     * - Confirmed/Completed reservations → same category / same organizer
+     * Excludes: completed events, full events, events user already interacted with.
+     */
+    public List<Event> getRecommendedEventsForUser(Long userId) {
+        Set<String> favoriteCategories = new HashSet<>();
+        Set<Long> favoriteOrganizerIds = new HashSet<>();
+        Set<Long> interactedEventIds = new HashSet<>();
+
+        // 1. Liked events
+        List<EventInteraction> likes = eventInteractionRepository.findByUser_IdAndLikedTrue(userId);
+        for (EventInteraction interaction : likes) {
+            Event e = interaction.getEvent();
+            interactedEventIds.add(e.getId());
+            if (e.getCategory() != null && !e.getCategory().isBlank()) {
+                favoriteCategories.add(e.getCategory());
+            }
+            if (e.getOrganizer() != null) {
+                favoriteOrganizerIds.add(e.getOrganizer().getId());
+            }
+        }
+
+        // 2. Highly rated events (≥ 3 stars)
+        List<EventComment> highRatedComments = eventCommentRepository
+                .findByUserIdAndRatingGreaterThanEqual(userId, 3);
+        for (EventComment comment : highRatedComments) {
+            Event e = comment.getEvent();
+            interactedEventIds.add(e.getId());
+            if (e.getCategory() != null && !e.getCategory().isBlank()) {
+                favoriteCategories.add(e.getCategory());
+            }
+            if (e.getOrganizer() != null) {
+                favoriteOrganizerIds.add(e.getOrganizer().getId());
+            }
+        }
+
+        // 3. Confirmed/Completed reservations (participated)
+        List<TicketReservation> reservations = ticketReservationRepository
+                .findByUserIdAndStatusIn(userId, List.of(ReservationStatus.CONFIRMED, ReservationStatus.COMPLETED));
+        for (TicketReservation reservation : reservations) {
+            Event e = reservation.getEvent();
+            interactedEventIds.add(e.getId());
+            if (e.getCategory() != null && !e.getCategory().isBlank()) {
+                favoriteCategories.add(e.getCategory());
+            }
+            if (e.getOrganizer() != null) {
+                favoriteOrganizerIds.add(e.getOrganizer().getId());
+            }
+        }
+
+        // If no interaction signal, fall back to upcoming events
+        if (favoriteCategories.isEmpty() && favoriteOrganizerIds.isEmpty()) {
+            return eventRepository.findUpcomingEvents(LocalDateTime.now(),
+                    org.springframework.data.domain.PageRequest.of(0, RECOMMENDATION_LIMIT));
+        }
+
+        // Ensure non-empty lists for the IN clause (JPA requires at least one element)
+        List<String> categories = favoriteCategories.isEmpty()
+                ? List.of("__NONE__")
+                : new ArrayList<>(favoriteCategories);
+        List<Long> organizerIds = favoriteOrganizerIds.isEmpty()
+                ? List.of(-1L)
+                : new ArrayList<>(favoriteOrganizerIds);
+        List<Long> excludeIds = interactedEventIds.isEmpty()
+                ? List.of(-1L)
+                : new ArrayList<>(interactedEventIds);
+
+        return eventRepository.findRecommendedEvents(
+                categories, organizerIds, excludeIds,
+                org.springframework.data.domain.PageRequest.of(0, RECOMMENDATION_LIMIT));
     }
 }

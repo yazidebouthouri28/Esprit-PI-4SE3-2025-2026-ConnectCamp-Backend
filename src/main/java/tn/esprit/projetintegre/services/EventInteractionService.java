@@ -96,7 +96,7 @@ public class EventInteractionService {
 
     private void updateCounters(Event event) {
         long likes = interactionRepository.countByEvent_IdAndLiked(event.getId(), true);
-        long dislikes = interactionRepository.countByEvent_IdAndLiked(event.getId(), false);
+        long dislikes = interactionRepository.countByEvent_IdAndDisliked(event.getId(), true);
 
         log.info("INTERACTION COUNTERS: event={}, likes={}, dislikes={}", event.getId(), likes, dislikes);
 
@@ -115,6 +115,7 @@ public class EventInteractionService {
         log.info("RATING FINAL: event={}, likes={}, dislikes={}, rating={}",
                 event.getId(), likes, dislikes, event.getRating());
 
-        eventRepository.save(event);
+        // Use a direct update to avoid failing bean-validation on legacy rows when only rating changes.
+        eventRepository.updateRating(event.getId(), event.getRating());
     }
 }

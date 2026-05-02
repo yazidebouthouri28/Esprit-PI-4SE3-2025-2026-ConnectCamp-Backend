@@ -36,6 +36,7 @@ public class SecurityConfig {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowedOrigins(List.of(
                             "http://localhost:4200",
+                            "http://localhost:4201",
                             "http://localhost:3000"
                     ));
                     config.setAllowedMethods(List.of("*"));
@@ -46,6 +47,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/",
                                 "/auth/**",
                                 "/api/public/**",
                                 "/uploads/**",
@@ -69,6 +71,8 @@ public class SecurityConfig {
                                 "/api/sponsors/**",
                                 "/api/events/**",
                                 "/api/gamifications/**",
+                                "/api/badges/**",
+                                "/api/medals/**",
                                 "/api/general-reviews/**",
                                 "/api/scheduler-logs/**"
                         ).permitAll()

@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface BadgeRepository extends JpaRepository<Badge, Long> {
     List<Badge> findByMedalId(Long medalId);
+
+    java.util.Optional<Badge> findByName(String name);
 }

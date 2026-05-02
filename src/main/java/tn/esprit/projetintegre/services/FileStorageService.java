@@ -13,7 +13,7 @@ import java.util.UUID;
 @Service
 public class FileStorageService {
 
-    @Value("${application.upload.dir:uploads}")
+    @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
     public String storeFile(MultipartFile file) {

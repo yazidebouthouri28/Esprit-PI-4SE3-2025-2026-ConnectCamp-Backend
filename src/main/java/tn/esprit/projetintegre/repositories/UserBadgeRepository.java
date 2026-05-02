@@ -17,5 +17,7 @@ public interface UserBadgeRepository extends JpaRepository<UserBadge, Long> {
 
     boolean existsByUserAndBadgeAndEvent(User user, Badge badge, Event event);
 
+    UserBadge findByUserAndBadgeAndEvent(User user, Badge badge, Event event);
+
     void deleteByEventId(Long eventId);
 }

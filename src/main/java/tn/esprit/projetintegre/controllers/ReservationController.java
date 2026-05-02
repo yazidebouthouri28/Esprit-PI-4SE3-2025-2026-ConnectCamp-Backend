@@ -12,11 +12,13 @@ import org.springframework.web.bind.annotation.*;
 import tn.esprit.projetintegre.dto.ApiResponse;
 import tn.esprit.projetintegre.dto.PageResponse;
 import tn.esprit.projetintegre.dto.response.ReservationResponse;
+import tn.esprit.projetintegre.dto.response.TicketReservationResponse;
 import tn.esprit.projetintegre.entities.Reservation;
 import tn.esprit.projetintegre.enums.PaymentStatus;
 import tn.esprit.projetintegre.enums.ReservationStatus;
 import tn.esprit.projetintegre.mapper.DtoMapper;
 import tn.esprit.projetintegre.services.ReservationService;
+import tn.esprit.projetintegre.services.TicketReservationService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,6 +32,7 @@ public class ReservationController {
 
     private final ReservationService reservationService;
     private final DtoMapper dtoMapper;
+    private final TicketReservationService ticketReservationService;
 
     @GetMapping
     @Operation(summary = "Get all reservations")
@@ -69,7 +72,8 @@ public class ReservationController {
 
     @GetMapping("/number/{reservationNumber}")
     @Operation(summary = "Get reservation by number")
-    public ResponseEntity<ApiResponse<ReservationResponse>> getReservationByNumber(@PathVariable String reservationNumber) {
+    public ResponseEntity<ApiResponse<ReservationResponse>> getReservationByNumber(
+            @PathVariable String reservationNumber) {
         Reservation reservation = reservationService.getReservationByNumber(reservationNumber);
         return ResponseEntity.ok(ApiResponse.success(dtoMapper.toReservationResponse(reservation)));
     }
@@ -88,27 +92,32 @@ public class ReservationController {
             @RequestParam(required = false) String specialRequests) {
         Reservation reservation = reservationService.createSiteReservation(userId, siteId, checkIn, checkOut,
                 numberOfGuests, guestName, guestEmail, guestPhone, specialRequests);
-        return ResponseEntity.ok(ApiResponse.success("Reservation created successfully", dtoMapper.toReservationResponse(reservation)));
+        return ResponseEntity.ok(
+                ApiResponse.success("Reservation created successfully", dtoMapper.toReservationResponse(reservation)));
     }
 
     @PostMapping("/event")
     @Operation(summary = "Create event reservation")
-    public ResponseEntity<ApiResponse<ReservationResponse>> createEventReservation(
+    public ResponseEntity<ApiResponse<TicketReservationResponse>> createEventReservation(
             @RequestParam Long userId,
             @RequestParam Long eventId,
             @RequestParam String guestName,
             @RequestParam String guestEmail,
-            @RequestParam String guestPhone) {
-        Reservation reservation = reservationService.createEventReservation(userId, eventId,
-                guestName, guestEmail, guestPhone);
-        return ResponseEntity.ok(ApiResponse.success("Reservation created successfully", dtoMapper.toReservationResponse(reservation)));
+            @RequestParam String guestPhone,
+            @RequestParam(defaultValue = "1") int quantity) {
+        String notes = "Guest: " + guestName + " | Email: " + guestEmail + " | Phone: " + guestPhone;
+        TicketReservationResponse reservation = ticketReservationService.createEventTicketReservation(
+                userId, eventId, quantity, notes);
+        return ResponseEntity.status(201)
+                .body(ApiResponse.success("Ticket reservation created successfully", reservation));
     }
 
     @PatchMapping("/{id}/confirm")
     @Operation(summary = "Confirm reservation")
     public ResponseEntity<ApiResponse<ReservationResponse>> confirmReservation(@PathVariable Long id) {
         Reservation reservation = reservationService.confirmReservation(id);
-        return ResponseEntity.ok(ApiResponse.success("Reservation confirmed", dtoMapper.toReservationResponse(reservation)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Reservation confirmed", dtoMapper.toReservationResponse(reservation)));
     }
 
     @PatchMapping("/{id}/cancel")
@@ -117,7 +126,8 @@ public class ReservationController {
             @PathVariable Long id,
             @RequestParam(required = false) String reason) {
         Reservation reservation = reservationService.cancelReservation(id, reason);
-        return ResponseEntity.ok(ApiResponse.success("Reservation cancelled", dtoMapper.toReservationResponse(reservation)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Reservation cancelled", dtoMapper.toReservationResponse(reservation)));
     }
 
     @PatchMapping("/{id}/payment")
@@ -127,6 +137,7 @@ public class ReservationController {
             @RequestParam PaymentStatus status,
             @RequestParam(required = false) String transactionId) {
         Reservation reservation = reservationService.updatePaymentStatus(id, status, transactionId);
-        return ResponseEntity.ok(ApiResponse.success("Payment status updated", dtoMapper.toReservationResponse(reservation)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Payment status updated", dtoMapper.toReservationResponse(reservation)));
     }
 }

@@ -39,5 +39,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @EntityGraph(attributePaths = { "user", "event" })
     List<Reservation> findByEventIdAndStatus(Long eventId, ReservationStatus status);
 
+    @EntityGraph(attributePaths = { "user", "event" })
+    List<Reservation> findByEventIdAndStatusIn(Long eventId, List<ReservationStatus> statuses);
+
+    @Query("SELECT r FROM Reservation r JOIN FETCH r.user u JOIN FETCH r.event e JOIN FETCH e.organizer o WHERE e.id = :eventId AND r.status IN :statuses")
+    List<Reservation> findParticipantsWithDetails(Long eventId, List<ReservationStatus> statuses);
+
     void deleteByEventId(Long eventId);
 }

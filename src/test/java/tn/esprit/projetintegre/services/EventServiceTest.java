@@ -22,12 +22,7 @@ import tn.esprit.projetintegre.entities.Event;
 import tn.esprit.projetintegre.entities.Organizer;
 import tn.esprit.projetintegre.entities.User;
 import tn.esprit.projetintegre.enums.EventStatus;
-import tn.esprit.projetintegre.repositories.EventRepository;
-import tn.esprit.projetintegre.repositories.OrganizerRepository;
-import tn.esprit.projetintegre.repositories.SiteRepository;
-import tn.esprit.projetintegre.repositories.UserRepository;
-import tn.esprit.projetintegre.repositories.GamificationRepository;
-import tn.esprit.projetintegre.repositories.ReservationRepository;
+import tn.esprit.projetintegre.repositories.*;
 import tn.esprit.projetintegre.exception.BusinessException;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,11 +35,31 @@ public class EventServiceTest {
     @Mock
     private SiteRepository siteRepository;
     @Mock
-    private UserRepository userRepository;
+    private BadgeRepository badgeRepository;
     @Mock
-    private GamificationRepository gamificationRepository;
+    private UserBadgeRepository userBadgeRepository;
     @Mock
     private ReservationRepository reservationRepository;
+    @Mock
+    private ParticipantRepository participantRepository;
+    @Mock
+    private EventCommentRepository eventCommentRepository;
+    @Mock
+    private TicketRepository ticketRepository;
+    @Mock
+    private TicketReservationRepository ticketReservationRepository;
+    @Mock
+    private TicketRequestRepository ticketRequestRepository;
+    @Mock
+    private TimeSlotRepository timeSlotRepository;
+    @Mock
+    private EventServiceEntityRepository eventServiceEntityRepository;
+    @Mock
+    private EventScheduleItemRepository eventScheduleItemRepository;
+    @Mock
+    private EventInteractionRepository eventInteractionRepository;
+    @Mock
+    private EventPhotoRepository eventPhotoRepository;
 
     @InjectMocks
     private EventService eventService;

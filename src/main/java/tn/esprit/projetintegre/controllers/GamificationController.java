@@ -7,8 +7,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.projetintegre.dto.ApiResponse;
+import tn.esprit.projetintegre.dto.request.AwardBulkRequest;
 import tn.esprit.projetintegre.dto.request.BadgeRequest;
 import tn.esprit.projetintegre.dto.request.MedalRequest;
 import tn.esprit.projetintegre.dto.response.BadgeResponse;
@@ -130,5 +132,19 @@ public class GamificationController {
     public ResponseEntity<ApiResponse<Void>> deleteBadge(@PathVariable Long id) {
         gamificationService.deleteBadge(id);
         return ResponseEntity.ok(ApiResponse.success("Badge deleted successfully", null));
+    }
+
+    @PostMapping("/badges/award-bulk")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Award a badge to multiple users")
+    public ResponseEntity<ApiResponse<Void>> awardBulkBadges(
+            @RequestBody AwardBulkRequest request,
+            Authentication authentication) {
+        gamificationService.awardBulkBadges(
+                request.getUserIds(),
+                request.getBadgeId(),
+                request.getEventId(),
+                authentication);
+        return ResponseEntity.ok(ApiResponse.success("Badges awarded successfully", null));
     }
 }

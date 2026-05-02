@@ -55,7 +55,6 @@ public class Event {
     @Size(max = 100, message = "La catégorie ne peut pas dépasser 100 caractères")
     private String category;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     private EventStatus status = EventStatus.DRAFT;
@@ -110,7 +109,7 @@ public class Event {
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<Reservation> reservations = new ArrayList<>();
+    private List<TicketReservation> ticketReservations = new ArrayList<>();
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -137,6 +136,23 @@ public class Event {
     @Min(value = 0, message = "Le nombre de vues ne peut pas être négatif")
     @Builder.Default
     private Integer viewCount = 0;
+
+    @Column(name = "predicted_attendees")
+    @Builder.Default
+    private Integer predictedAttendees = 0;
+
+    @Column(name = "popularity")
+    private String popularity;
+
+    @Column(name = "suggested_badge")
+    private String suggestedBadge;
+
+    @Column(name = "actual_attendees")
+    @Builder.Default
+    private Integer actualAttendees = 0;
+
+    @Column(name = "awarded_badge")
+    private String awardedBadge;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;

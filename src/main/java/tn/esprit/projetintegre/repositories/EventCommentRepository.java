@@ -11,18 +11,21 @@ import java.util.Optional;
 @Repository
 public interface EventCommentRepository extends JpaRepository<EventComment, Long> {
     @Override
-    @EntityGraph(attributePaths = {"event", "user"})
+    @EntityGraph(attributePaths = { "event", "user" })
     List<EventComment> findAll();
 
     @Override
-    @EntityGraph(attributePaths = {"event", "user"})
+    @EntityGraph(attributePaths = { "event", "user" })
     Optional<EventComment> findById(Long id);
 
-    @EntityGraph(attributePaths = {"event", "user"})
+    @EntityGraph(attributePaths = { "event", "user" })
     List<EventComment> findByEventId(Long eventId);
 
-    @EntityGraph(attributePaths = {"event", "user"})
+    @EntityGraph(attributePaths = { "event", "user" })
     List<EventComment> findByUserId(Long userId);
+
+    @EntityGraph(attributePaths = { "event", "user" })
+    List<EventComment> findByUserIdAndRatingGreaterThanEqual(Long userId, Integer minRating);
 
     void deleteByEventId(Long eventId);
 }
