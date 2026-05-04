@@ -15,7 +15,10 @@ import tn.esprit.projetintegre.dto.response.RoomSentimentStats;
 import tn.esprit.projetintegre.services.MessageService;
 import tn.esprit.projetintegre.services.SmartSuggestionService;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/messages")
@@ -102,6 +105,16 @@ public class MessageController {
         return ResponseEntity.ok(ApiResponse.success(
                 "AI-powered suggestions generated successfully",
                 smartSuggestionService.generateSuggestions(chatRoomId)));
+    }
+
+    // ── Ping endpoint for testing throttling ───────────────────────────────────────
+    @GetMapping("/ping")
+    public ResponseEntity<Map<String, Object>> ping(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "pong");
+        response.put("userId", userId);
+        response.put("timestamp", LocalDateTime.now());
+        return ResponseEntity.ok(response);
     }
 
 }

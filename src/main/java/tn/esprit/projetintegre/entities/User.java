@@ -8,6 +8,7 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import tn.esprit.projetintegre.enums.BanStatus;
 import tn.esprit.projetintegre.enums.Role;
 import tn.esprit.projetintegre.enums.SponsorStatus;
 
@@ -103,6 +104,11 @@ public class User {
     private String suspensionReason;
     private LocalDateTime suspendedAt;
     private LocalDateTime suspendedUntil;
+    
+    // Throttling ban status
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private BanStatus banStatus = BanStatus.ACTIVE;
 
     // Profile fields
     private String avatar;
