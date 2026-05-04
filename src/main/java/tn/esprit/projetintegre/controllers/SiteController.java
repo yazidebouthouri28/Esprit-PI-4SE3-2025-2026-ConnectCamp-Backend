@@ -31,6 +31,11 @@ public class SiteController {
         return siteService.getSiteSummaries();
     }
 
+    @GetMapping("/admin/all")
+    public List<SiteResponse> getAllSitesForAdmin() {
+        return siteService.getAllSites();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<SiteResponse> getSiteById(@PathVariable Long id) {
         return ResponseEntity.ok(siteService.getSiteById(id));

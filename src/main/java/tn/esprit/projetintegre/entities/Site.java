@@ -120,6 +120,10 @@ public class Site {
     @Builder.Default
     private List<CampHighlight> campHighlights = new ArrayList<>();
 
+    @OneToMany(mappedBy = "site", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Reservation> reservations = new ArrayList<>();
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
