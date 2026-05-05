@@ -57,45 +57,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(
-                                "/",
-                                "/auth/**",
-                                "/api/auth/**",
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/api/public/**",
-                                "/uploads/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/error",
-                                "/actuator/**",
-                                "/ws/**",
-                                "/api/reservations/**"
-                        ).permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET,
-                                "/api/events/organizer/**"
-                        ).authenticated()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET,
-                                "/api/sites/**",
-                                "/api/reviews/site/**",
-                                "/api/camp-highlights/site/**",
-                                "/api/virtual-tours/site/**",
-                                "/api/certifications/site/**",
-                                "/api/sponsors/**",
-                                "/api/events/**",
-                                "/api/gamifications/**",
-                                "/api/badges/**",
-                                "/api/medals/**",
-                                "/api/general-reviews/**",
-                                "/api/scheduler-logs/**"
-                        ).permitAll()
-                        .requestMatchers("/api/admin/sponsorships/possible-matches").hasAnyRole("ADMIN", "ORGANIZER")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
-                .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
