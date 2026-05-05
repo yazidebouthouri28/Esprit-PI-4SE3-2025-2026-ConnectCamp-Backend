@@ -15,8 +15,9 @@ public class CorsConfig implements WebMvcConfigurer {
                         "http://localhost:3000",
                         "https://app-frontend1-d5a2bbbnb9avgteu.austriaeast-01.azurewebsites.net"
                 )
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
-                .allowCredentials(true);
+                .allowCredentials(true)
+                .maxAge(3600);
     }
 }
