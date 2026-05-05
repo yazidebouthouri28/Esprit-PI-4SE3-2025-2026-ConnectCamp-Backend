@@ -37,7 +37,8 @@ public class SecurityConfig {
                     config.setAllowedOrigins(List.of(
                             "http://localhost:4200",
                             "http://localhost:4201",
-                            "http://localhost:3000"
+                            "http://localhost:3000",
+                            "https://app-frontend1-d5a2bbbnb9avgteu.austriaeast-01.azurewebsites.net"
                     ));
                     config.setAllowedMethods(List.of("*"));
                     config.setAllowedHeaders(List.of("*"));
